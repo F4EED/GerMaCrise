@@ -1,0 +1,31 @@
+[
+  {
+    "nom": "C",
+    "prenom": "R",
+    "email": "fvdgs",
+    "structures": [
+      "Citoyen",
+      "SDIS 42"
+    ]
+  },
+  {
+    "nom": "bouchet",
+    "prenom": "frederic",
+    "email": "undefined",
+    "structures": [
+      "Citoyen",
+      "CG 42",
+      "UDIOM 42"
+    ]
+  },
+  {
+    "nom": "Gimenez",
+    "prenom": "Grégory",
+    "email": ".....",
+    "structures": [
+      "Citoyen",
+      "SDIS 42",
+      "UDIOM 42"
+    ]
+  }
+]

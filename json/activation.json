@@ -1,0 +1,30 @@
+{
+  "activations": [
+    {
+      "id": 1,
+      "titre": "Activation incendie secteur nord",
+      "type": "Incendie",
+      "date_creation": "2025-09-14T09:30:00",
+      "date_cloture": "",
+      "status": "en cours",
+      "responsable": "",
+      "structure_implique": ["Structure A", "Structure B"],
+      "commune": "Ville Nord",
+      "secteur": "Nord",
+      "description_creation_activation": "Description détaillée de l’activation"
+    },
+    {
+      "id": 2,
+      "titre": "Activation inondation secteur sud",
+      "type": "Inondation",
+      "date_creation": "2025-09-13T14:00:00",
+      "date_cloture": "2025-09-13T18:00:00",
+      "status": "terminée",
+      "responsable": "",
+      "structure_implique": ["Structure C"],
+      "commune": "Ville Sud",
+      "secteur": "Sud",
+      "description_creation_activation": "Description détaillée de l’activation"
+    }
+  ]
+}

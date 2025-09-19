@@ -1,0 +1,11 @@
+{
+"type": "FeatureCollection",
+"name": "sql_statement",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "osm_id": "node/12255435483", "type": "fire_hydrant", "ref": null, "fire_hydrant_type": "pillar", "pressure": null, "diameter": null, "colour": null, "flow_rate": null, "couplings": null, "water_source": null, "survey_date": null, "position": "green", "volume": null, "indoor": null, "level": null, "com_insee": "42094", "com_nom": "Feurs" }, "geometry": { "type": "Point", "coordinates": [ 4.2204114, 45.750398500379426 ] } },
+{ "type": "Feature", "properties": { "osm_id": "node/12318862692", "type": "fire_hydrant", "ref": "38", "fire_hydrant_type": "pillar", "pressure": null, "diameter": null, "colour": null, "flow_rate": null, "couplings": null, "water_source": null, "survey_date": null, "position": "green", "volume": null, "indoor": null, "level": null, "com_insee": "42094", "com_nom": "Feurs" }, "geometry": { "type": "Point", "coordinates": [ 4.2222291, 45.721151600383536 ] } },
+{ "type": "Feature", "properties": { "osm_id": "node/9038967517", "type": "fire_hydrant", "ref": null, "fire_hydrant_type": "pillar", "pressure": null, "diameter": null, "colour": null, "flow_rate": null, "couplings": null, "water_source": null, "survey_date": null, "position": null, "volume": null, "indoor": null, "level": null, "com_insee": "42251", "com_nom": "Saint-Laurent-la-Conche" }, "geometry": { "type": "Point", "coordinates": [ 4.2094059, 45.684332900388611 ] } },
+{ "type": "Feature", "properties": { "osm_id": "way/1172268329", "type": "water_tank", "ref": null, "fire_hydrant_type": null, "pressure": null, "diameter": null, "colour": null, "flow_rate": null, "couplings": null, "water_source": null, "survey_date": null, "position": null, "volume": null, "indoor": null, "level": null, "com_insee": "42065", "com_nom": "Civens" }, "geometry": { "type": "Point", "coordinates": [ 4.218939150009122, 45.767443650397716 ] } }
+]
+}

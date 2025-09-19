@@ -1,0 +1,40 @@
+{
+  "lieux_accueil": [
+    {
+      "id": "lieu_001",
+      "nom_site": "Gymnase Central",
+      "commune": "Saint-Étienne",
+      "surface": 1200,
+      "nb_accueil": 200,
+      "nb_hebergement": 50,
+      "nb_ravitaillement": 2,
+      "autres_ressource": "Salle médicale, sanitaires",
+      "telephone_responsable": "+33 4 77 00 01 01",
+      "adresse": "12 Rue du Gymnase, 42000 Saint-Étienne"
+    },
+    {
+      "id": "lieu_002",
+      "nom_site": "Salle Polyvalente Loire",
+      "commune": "Roanne",
+      "surface": 900,
+      "nb_accueil": 150,
+      "nb_hebergement": 30,
+      "nb_ravitaillement": 1,
+      "autres_ressource": "Cuisine équipée, matériel secours",
+      "telephone_responsable": "+33 4 77 00 02 02",
+      "adresse": "5 Avenue de la République, 42300 Roanne"
+    },
+    {
+      "id": "lieu_1758014538835",
+      "nom_site": "gymnase Youri Gargarine",
+      "commune": "Ricamarie",
+      "surface": 500,
+      "nb_accueil": 60,
+      "nb_hebergement": 40,
+      "nb_ravitaillement": 40,
+      "autres_ressource": "toutes les resources d'un gymanse, vestière, douche, matelas de sport",
+      "telephone_responsable": "",
+      "adresse": "youri gargarine"
+    }
+  ]
+}

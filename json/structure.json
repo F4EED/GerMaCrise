@@ -1,0 +1,42 @@
+[
+  {
+    "nom": "Citoyen",
+    "type": "citoyen"
+  },
+  {
+    "nom": "Préfecture 42",
+    "type": "Service de la préfecture de la loire"
+  },
+  {
+    "nom": "SEM",
+    "type": "Saint Etienne Métropole"
+  },
+  {
+    "nom": "CG 42",
+    "type": "Conseil Général de la Loire"
+  },
+  {
+    "nom": "Mairie",
+    "type": "Maire"
+  },
+  {
+    "nom": "SDIS 42",
+    "type": "Sapeur pompier de la loire"
+  },
+  {
+    "nom": "UDIOM 42",
+    "type": "Unité département des secouristes de l'ordre de malte"
+  },
+  {
+    "nom": "ADRASEC 42",
+    "type": "ADRASEC 42"
+  },
+  {
+    "nom": "CRF 42",
+    "type": "CRF 42"
+  },
+  {
+    "nom": "ADPC 42",
+    "type": "ADPC 42"
+  }
+]

@@ -1,0 +1,64 @@
+{
+  "contacts": [
+    {
+      "id": "contact_001",
+      "nom": "Dupont",
+      "prenom": "Jean",
+      "tel_bureau": "+33 4 77 00 00 01",
+      "tel_portable": "+33 6 11 22 33 44",
+      "tel_personnel": "+33 9 88 77 66 55",
+      "structure": "Préfecture de la Loire",
+      "fonction": "Directeur des opérations",
+      "mail": "jean.dupont@loire.gouv.fr",
+      "remarques": "Disponible 24/7 en cas d'urgence"
+    },
+    {
+      "id": "contact_002",
+      "nom": "Martin",
+      "prenom": "Sophie",
+      "tel_bureau": "+33 4 77 00 00 02",
+      "tel_portable": "+33 6 55 44 33 22",
+      "tel_personnel": "",
+      "structure": "SIS 42",
+      "fonction": "Responsable technique",
+      "mail": "sophie.martin@sdis42.fr",
+      "remarques": "À contacter en priorité sur le portable"
+    },
+    {
+      "id": "Bouchet",
+      "nom": "test1.nom",
+      "prenom": "test1.prenom",
+      "tel_bureau": "test1.telbur",
+      "tel_portable": "test1.telport",
+      "tel_personnel": "test1.telperso",
+      "structure": "Citoyen, CG 42, UDIOM 42",
+      "fonction": "Chargé de Communication",
+      "mail": "gg@fff.fr",
+      "remarques": "test1.aucune"
+    },
+    {
+      "id": "contact_1757963049458",
+      "nom": "callet",
+      "prenom": "Agnes",
+      "tel_bureau": "telbur",
+      "tel_portable": "telport",
+      "tel_personnel": "telperso",
+      "structure": "Citoyen, Préfecture 42",
+      "fonction": "Maire",
+      "mail": "fjfhgjf@",
+      "remarques": "bidon"
+    },
+    {
+      "id": "contact_1758014640566",
+      "nom": "Ciryl",
+      "prenom": "Bonnefois",
+      "tel_bureau": "telbur",
+      "tel_portable": "telport",
+      "tel_personnel": "telperso",
+      "structure": "Mairie",
+      "fonction": "Maire",
+      "mail": "",
+      "remarques": "maire dela ville de la ricamarie"
+    }
+  ]
+}

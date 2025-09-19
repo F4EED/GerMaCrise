@@ -1,0 +1,22 @@
+[
+  { "risque": "Inondation" },
+  { "risque": "Tempête / Vent violent" },
+  { "risque": "Séisme" },
+  { "risque": "Éruption volcanique" },
+  { "risque": "Glissement de terrain / Avalanche" },
+  { "risque": "Incendie forestier" },
+  { "risque": "Chimique industriel" },
+  { "risque": "Explosion industrielle" },
+  { "risque": "Fuite de gaz" },
+  { "risque": "Pollution environnementale" },
+  { "risque": "Radiologique / Nucléaire" },
+  { "risque": "Biologique / Epidémie" },
+  { "risque": "Cyberattaque" },
+  { "risque": "Terrorisme / Attentat" },
+  { "risque": "Grève / Conflit social" },
+  { "risque": "Panne énergétique / Blackout" },
+  { "risque": "Accident de transport (chimique, carburant)" },
+  { "risque": "Crise sanitaire locale" },
+  { "risque": "Température extrême / Canicule" },
+  { "risque": "Autre / Divers" }
+]

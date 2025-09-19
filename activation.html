@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Activation - e-germacrise</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    body.light { background-color: #ffffff; color: #000000; }
+    body.dark { background-color: #000000; color: #ffd700; }
+
+    main {
+      padding: 20px;
+    }
+
+    h1 {
+      font-size: 1.5em;
+    }
+  </style>
+</head>
+<body class="light">
+  <main>
+    <h1>Activation</h1>
+    <p>Bienvenue dans la section Activation. Choisissez Création ou Suivi dans le menu.</p>
+    <!-- Ici, tu peux ajouter tes formulaires ou tableaux pour Création / Suivi -->
+  </main>
+
+  <script>
+    // Gestion du thème reçu depuis l'iframe parent
+    window.addEventListener("message", (event) => {
+      if (event.data.theme) {
+        document.body.className = event.data.theme;
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Utilisateurs - GerMaCrise</title>
+  <style>
+    body { margin:0; font-family:Arial,sans-serif; transition: background-color 0.3s, color 0.3s; }
+    body.light { background-color:#ffffff; color:#000000; }
+    body.dark { background-color:#000000; color:#ffd700; }
+
+    header { padding:10px; font-size:1.2em; font-weight:bold; }
+    h2 { margin-top:0; }
+
+    .form-section { margin:15px; }
+    label { display:block; margin-top:10px; }
+    input, select { width:100%; padding:5px; margin-top:3px; }
+    select[multiple] { height:120px; }
+    button { margin-top:10px; padding:5px 10px; cursor:pointer; }
+
+    table { width:100%; border-collapse:collapse; margin-top:20px; }
+    th, td { border:1px solid #999; padding:5px; text-align:left; }
+    th { background-color:rgba(0,0,0,0.1); }
+
+    /* Adaptation thème */
+    body.dark table th { background-color:rgba(255,215,0,0.2); }
+    body.dark input, body.dark select { background-color:#333; color:#ffd700; border:1px solid #ffd700; }
+    body.dark button { background-color:#333; color:#ffd700; border:1px solid #ffd700; }
+
+    p.instruction { font-size:0.9em; color:gray; margin-top:5px; }
+  </style>
+</head>
+<body class="light">
+  <header>Gestion des utilisateurs - GerMaCrise</header>
+
+  <div class="form-section">
+    <h2>Ajouter / Modifier un utilisateur</h2>
+    <label>Nom <input type="text" id="nom"></label>
+    <label>Prénom <input type="text" id="prenom"></label>
+    <label>Email <input type="email" id="email"></label>
+    <label>Structures
+      <select id="structure" multiple size="5"></select>
+    </label>
+    <button onclick="ajouterUtilisateur()">Ajouter / Modifier</button>
+    <button onclick="resetForm()">Annuler</button>
+  </div>
+
+  <div class="form-section">
+    <h2>Liste des utilisateurs</h2>
+    <table id="tableUsers">
+      <thead>
+        <tr><th>Nom</th><th>Prénom</th><th>Email</th><th>Structures</th><th>Actions</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <button onclick="exporterJSON()">📥 Exporter JSON</button>
+    <button onclick="document.getElementById('importFile').click()">📤 Importer JSON</button>
+    <button onclick="sauvegarderDansJson()">💾 Sauvegarder dans json/</button>
+
+    <!-- input file masqué -->
+    <input type="file" id="importFile" accept="application/json" style="display:none" onchange="importerJSON(event)">
+
+    <p class="instruction">
+      ⚠️ Le bouton "Sauvegarder dans json/" génère un nouveau <code>utilisateurs.json</code>.<br>
+      Pour qu’il soit relu automatiquement au prochain chargement, remplace manuellement le fichier présent dans le dossier <code>json/</code>.
+    </p>
+  </div>
+
+  <script>
+    window.addEventListener('message', e => {
+      if(e.data.theme) document.body.className = e.data.theme;
+    });
+
+    let utilisateurs = [];
+    let structures = [];
+    let editIndex = null;
+
+    async function chargerStructures() {
+      const data = localStorage.getItem("structures");
+      if(data) {
+        structures = JSON.parse(data);
+      } else {
+        try {
+          const resp = await fetch("json/structure.json");
+          structures = await resp.json();
+        } catch(e) {
+          console.warn("Structures introuvables", e);
+          structures = [];
+        }
+      }
+      remplirSelectStructures();
+    }
+
+    function remplirSelectStructures() {
+      const select = document.getElementById('structure');
+      select.innerHTML = '';
+      structures.forEach(s => {
+        const opt = document.createElement('option');
+        opt.value = s.nom;
+        opt.textContent = s.nom;
+        select.appendChild(opt);
+      });
+    }
+
+    async function chargerUtilisateurs() {
+      try {
+        const resp = await fetch("json/utilisateurs.json");
+        if(!resp.ok) throw new Error("Fichier JSON introuvable");
+        utilisateurs = await resp.json();
+        console.log("Utilisateurs chargés depuis json/utilisateurs.json");
+      } catch(e) {
+        console.warn("Chargement depuis localStorage", e);
+        const data = localStorage.getItem("utilisateurs");
+        utilisateurs = data ? JSON.parse(data) : [];
+      }
+      afficherUtilisateurs();
+    }
+
+    function sauvegarderUtilisateurs() {
+      localStorage.setItem("utilisateurs", JSON.stringify(utilisateurs));
+    }
+
+    function ajouterUtilisateur() {
+      const nom = document.getElementById('nom').value.trim();
+      const prenom = document.getElementById('prenom').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const select = document.getElementById('structure');
+      const structuresChoisies = Array.from(select.selectedOptions).map(opt => opt.value);
+
+      if(!nom || !prenom || !email || structuresChoisies.length === 0) {
+        alert("Veuillez remplir tous les champs et choisir au moins une structure");
+        return;
+      }
+
+      if(editIndex !== null) {
+        utilisateurs[editIndex] = {nom, prenom, email, structures: structuresChoisies};
+        editIndex = null;
+      } else {
+        utilisateurs.push({nom, prenom, email, structures: structuresChoisies});
+      }
+
+      sauvegarderUtilisateurs();
+      afficherUtilisateurs();
+      resetForm();
+    }
+
+    function afficherUtilisateurs() {
+      const tbody = document.getElementById('tableUsers').querySelector('tbody');
+      tbody.innerHTML = '';
+      utilisateurs.forEach((u, index) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${u.nom}</td>
+          <td>${u.prenom}</td>
+          <td>${u.email}</td>
+          <td>${u.structures ? u.structures.join(', ') : ''}</td>
+          <td>
+            <button onclick="modifierUtilisateur(${index})">✏</button>
+            <button onclick="supprimerUtilisateur(${index})">🗑</button>
+          </td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function modifierUtilisateur(index) {
+      const u = utilisateurs[index];
+      document.getElementById('nom').value = u.nom;
+      document.getElementById('prenom').value = u.prenom;
+      document.getElementById('email').value = u.email;
+      const select = document.getElementById('structure');
+      Array.from(select.options).forEach(opt => {
+        opt.selected = u.structures.includes(opt.value);
+      });
+      editIndex = index;
+    }
+
+    function supprimerUtilisateur(index) {
+      if(confirm("Supprimer cet utilisateur ?")) {
+        utilisateurs.splice(index,1);
+        sauvegarderUtilisateurs();
+        afficherUtilisateurs();
+      }
+    }
+
+    function resetForm() {
+      document.getElementById('nom').value='';
+      document.getElementById('prenom').value='';
+      document.getElementById('email').value='';
+      Array.from(document.getElementById('structure').options).forEach(opt => opt.selected = false);
+      editIndex = null;
+    }
+
+    function exporterJSON() {
+      const dataStr = JSON.stringify(utilisateurs, null, 2);
+      const blob = new Blob([dataStr], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "utilisateurs.json";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    function sauvegarderDansJson() {
+      exporterJSON();
+      alert("✅ Fichier utilisateurs.json généré.\n⚠️ Copie-le dans ton dossier json/ pour qu’il soit pris en compte au prochain rechargement.");
+    }
+
+    function importerJSON(event) {
+      const file = event.target.files[0];
+      if(!file) return;
+      const reader = new FileReader();
+      reader.onload = e => {
+        try {
+          const data = JSON.parse(e.target.result);
+          if(Array.isArray(data)) {
+            utilisateurs = data;
+            sauvegarderUtilisateurs();
+            afficherUtilisateurs();
+            alert("✅ Importation réussie !");
+          } else {
+            alert("❌ Fichier invalide");
+          }
+        } catch(err) {
+          alert("❌ Erreur de lecture du fichier");
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    // Initialisation
+    chargerStructures();
+    chargerUtilisateurs();
+  </script>
+</body>
+</html>

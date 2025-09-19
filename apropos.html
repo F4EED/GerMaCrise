@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>À propos - e-germacrise</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+body { margin:0; font-family:Arial,sans-serif; transition: background 0.5s, color 0.5s; background:#fff; color:#000; padding:20px; }
+body.dark { background:#111; color:yellow; }
+
+h1, h2, h3, p, li { transition: color 0.5s; }
+a { color:inherit; text-decoration:none; }
+a:hover { text-decoration:underline; }
+
+#aproposContainer { max-width:900px; margin:0 auto; }
+#logo { display:block; margin:0 auto 20px auto; max-width:150px; }
+
+ul { padding-left:20px; }
+</style>
+</head>
+<body>
+<div id="aproposContainer">
+  <img id="logo" src="images/Logo_F4EED.png" alt="Logo e-germacrise">
+  <h1>À propos de GerMaCrise</h1>
+  <p>GerMaCrise est un POC, une application, destinée à aider à la gestion de crise en mode offline. Elle permet de visualiser des cartes, suivre des informations importantes en temps réel.</p>
+  
+  <h2>Objectif</h2>
+  <ul>
+    <li>Visualisation de cartes hors-ligne</li>
+    <li>Gestion de l'utilisateur de l'application</li>
+  </ul>
+  <h2>Fonctionnalités principales</h2>
+  <ul>
+    <li>Gestion de l'utilisateur de l'application</li>
+    <li>Saisie d'événement</li>
+    <li>Visualisation de cartes hors-ligne</li>
+  </ul>
+<h2>Mais qui a écrit ce foutus code</h2>
+  <ul>
+    <li>En grosse partie ChatGPT (merci a lui, elle,...)</li>
+    <li>Merci aussi a Valentin Saugnier pour son aide sur la partie pmtiles de Cartoff</li>
+    <li> et moi mais ça c'est accessoire...</li>
+  </ul>
+</div>
+
+<script>
+// === Réception du thème depuis le parent
+window.addEventListener('message', (event)=>{
+  if(event.data.theme){
+    if(event.data.theme==='dark') document.body.classList.add('dark');
+    else document.body.classList.remove('dark');
+  }
+});
+</script>
+</body>
+</html>

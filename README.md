@@ -1,2 +1,2 @@
-# germacrise
-GerMaCrise, cartographie offline, gestion d'annuaire et de liste, ….
+# cartoff
+projet de gestion de cartographie et données cartos pour l'aide à la gestion de crise. En mode web, mais 100% offline

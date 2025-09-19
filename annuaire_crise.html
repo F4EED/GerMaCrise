@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Annuaire de crise - GerMaCrise</title>
+  <style>
+    body { margin:0; font-family:Arial,sans-serif; transition: background-color 0.3s, color 0.3s; }
+    body.light { background-color:#ffffff; color:#000000; }
+    body.dark { background-color:#000000; color:#ffd700; }
+
+    header { padding:10px; font-size:1.2em; font-weight:bold; }
+    h2 { margin-top:0; }
+
+    .form-section { margin:15px; }
+    label { display:block; margin-top:10px; }
+    input, select, textarea { width:100%; padding:5px; margin-top:3px; }
+    button { margin-top:10px; padding:5px 10px; cursor:pointer; }
+
+    table { width:100%; border-collapse:collapse; margin-top:20px; }
+    th, td { border:1px solid #999; padding:5px; text-align:left; }
+    th { background-color:rgba(0,0,0,0.1); }
+
+    body.dark table th { background-color:rgba(255,215,0,0.2); }
+    body.dark input, body.dark select, body.dark textarea, body.dark button {
+      background-color:#333; color:#ffd700; border:1px solid #ffd700;
+    }
+
+    p.instruction { font-size:0.9em; color:gray; margin-top:5px; }
+    .btn-group { margin-top:10px; }
+    .btn-group button { margin-right:10px; }
+  </style>
+</head>
+<body class="light">
+  <header>Annuaire de crise - GerMaCrise</header>
+
+  <div class="form-section">
+    <h2>Ajouter / Modifier un contact</h2>
+    <label>Nom <input type="text" id="nom"></label>
+    <label>Prénom <input type="text" id="prenom"></label>
+    <label>Téléphone bureau <input type="text" id="tel_bureau"></label>
+    <label>Téléphone portable <input type="text" id="tel_portable"></label>
+    <label>Téléphone personnel <input type="text" id="tel_personnel"></label>
+    <label>Structure
+      <select id="structure" multiple></select>
+    </label>
+    <label>Fonction
+      <select id="fonction"></select>
+    </label>
+    <label>Email <input type="email" id="mail"></label>
+    <label>Remarques <textarea id="remarques"></textarea></label>
+
+    <button onclick="ajouterContact()">Ajouter / Modifier</button>
+    <button onclick="resetForm()">Annuler</button>
+  </div>
+
+  <div class="form-section">
+    <h2>Recherche multicritère</h2>
+    <label>Nom <input type="text" id="searchNom" oninput="rechercherContacts()"></label>
+    <label>Prénom <input type="text" id="searchPrenom" oninput="rechercherContacts()"></label>
+    <label>Structure
+      <select id="searchStructure" multiple onchange="rechercherContacts()"></select>
+    </label>
+    <label>Fonction
+      <select id="searchFonction" onchange="rechercherContacts()"></select>
+    </label>
+  </div>
+
+  <div class="form-section">
+    <h2>Liste des contacts</h2>
+    <table id="tableContacts">
+      <thead>
+        <tr>
+          <th>Nom</th><th>Prénom</th><th>Tél. Bureau</th><th>Tél. Portable</th>
+          <th>Tél. Perso</th><th>Structure</th><th>Fonction</th>
+          <th>Email</th><th>Remarques</th><th>Actions</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+    <div class="btn-group">
+      <button onclick="exporterJSON()">📥 Exporter en JSON</button>
+      <button onclick="document.getElementById('importFile').click()">📤 Importer un JSON</button>
+      <input type="file" id="importFile" accept=".json" onchange="importerJSON(event)" style="display:none;">
+    </div>
+    <p class="instruction">
+      ⚠️ Pour mettre à jour la source, déplacez ou remplacez le fichier téléchargé dans le dossier <code>json/</code>.
+    </p>
+  </div>
+
+  <script>
+    // Adaptation du thème clair/sombre
+    window.addEventListener('message', e => {
+      if(e.data.theme) document.body.className = e.data.theme;
+    });
+
+    let contacts = [];
+    let structures = [];
+    let fonctions = [];
+    let editIndex = null;
+
+    async function chargerStructures() {
+      try {
+        const resp = await fetch("json/structure.json");
+        if(resp.ok) structures = await resp.json();
+      } catch(e) { console.warn("Impossible de charger structure.json", e); }
+
+      // Ajout structures dans les deux selects
+      const selectAdd = document.getElementById("structure");
+      const selectSearch = document.getElementById("searchStructure");
+      selectAdd.innerHTML = '';
+      selectSearch.innerHTML = '';
+      structures.forEach(s => {
+        const opt1 = document.createElement("option");
+        opt1.value = s.nom;
+        opt1.textContent = s.nom;
+        selectAdd.appendChild(opt1);
+
+        const opt2 = document.createElement("option");
+        opt2.value = s.nom;
+        opt2.textContent = s.nom;
+        selectSearch.appendChild(opt2);
+      });
+    }
+
+    async function chargerFonctions() {
+      try {
+        const resp = await fetch("json/fonctions.json");
+        if(resp.ok) fonctions = await resp.json();
+      } catch(e) { console.warn("Impossible de charger fonctions.json", e); }
+
+      const selectAdd = document.getElementById("fonction");
+      const selectSearch = document.getElementById("searchFonction");
+      selectAdd.innerHTML = '';
+      selectSearch.innerHTML = '<option value="">-- Toutes --</option>';
+
+      fonctions.forEach(f => {
+        const opt1 = document.createElement("option");
+        opt1.value = f.fonction;
+        opt1.textContent = f.fonction;
+        selectAdd.appendChild(opt1);
+
+        const opt2 = document.createElement("option");
+        opt2.value = f.fonction;
+        opt2.textContent = f.fonction;
+        selectSearch.appendChild(opt2);
+      });
+    }
+
+    async function chargerContacts() {
+      try {
+        const resp = await fetch("json/annuaire_crise.json");
+        if(resp.ok) {
+          const data = await resp.json();
+          contacts = data.contacts || [];
+        }
+      } catch(e) {
+        console.warn("Impossible de charger annuaire_crise.json", e);
+      }
+      afficherContacts();
+    }
+
+    function sauvegarderContacts() {
+      localStorage.setItem("contacts", JSON.stringify(contacts));
+    }
+
+    function ajouterContact() {
+      const contact = {
+        id: editIndex !== null ? contacts[editIndex].id : "contact_" + Date.now(),
+        nom: document.getElementById('nom').value.trim(),
+        prenom: document.getElementById('prenom').value.trim(),
+        tel_bureau: document.getElementById('tel_bureau').value.trim(),
+        tel_portable: document.getElementById('tel_portable').value.trim(),
+        tel_personnel: document.getElementById('tel_personnel').value.trim(),
+        structure: Array.from(document.getElementById('structure').selectedOptions).map(o=>o.value).join(", "),
+        fonction: document.getElementById('fonction').value,
+        mail: document.getElementById('mail').value.trim(),
+        remarques: document.getElementById('remarques').value.trim()
+      };
+
+      if(editIndex !== null) {
+        contacts[editIndex] = contact;
+        editIndex = null;
+      } else {
+        contacts.push(contact);
+      }
+
+      sauvegarderContacts();
+      afficherContacts();
+      resetForm();
+    }
+
+    function afficherContacts(list = contacts) {
+      const tbody = document.getElementById('tableContacts').querySelector('tbody');
+      tbody.innerHTML = '';
+      list.forEach((c, index) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${c.nom}</td>
+          <td>${c.prenom}</td>
+          <td>${c.tel_bureau}</td>
+          <td>${c.tel_portable}</td>
+          <td>${c.tel_personnel}</td>
+          <td>${c.structure}</td>
+          <td>${c.fonction}</td>
+          <td>${c.mail}</td>
+          <td>${c.remarques}</td>
+          <td>
+            <button onclick="modifierContact(${index})">✏</button>
+            <button onclick="supprimerContact(${index})">🗑</button>
+          </td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function modifierContact(index) {
+      const c = contacts[index];
+      document.getElementById('nom').value = c.nom;
+      document.getElementById('prenom').value = c.prenom;
+      document.getElementById('tel_bureau').value = c.tel_bureau;
+      document.getElementById('tel_portable').value = c.tel_portable;
+      document.getElementById('tel_personnel').value = c.tel_personnel;
+      document.getElementById('mail').value = c.mail;
+      document.getElementById('remarques').value = c.remarques;
+
+      // Structures multiples
+      const structSelect = document.getElementById('structure');
+      Array.from(structSelect.options).forEach(opt => {
+        opt.selected = c.structure.split(", ").includes(opt.value);
+      });
+
+      // Fonction
+      document.getElementById('fonction').value = c.fonction;
+
+      editIndex = index;
+    }
+
+    function supprimerContact(index) {
+      if(confirm("Supprimer ce contact ?")) {
+        contacts.splice(index, 1);
+        sauvegarderContacts();
+        afficherContacts();
+      }
+    }
+
+    function resetForm() {
+      document.querySelectorAll('.form-section input, .form-section textarea').forEach(el => el.value = '');
+      document.getElementById('structure').selectedIndex = -1;
+      document.getElementById('fonction').selectedIndex = -1;
+      editIndex = null;
+    }
+
+    function exporterJSON() {
+      const dataStr = JSON.stringify({contacts}, null, 2);
+      const blob = new Blob([dataStr], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "annuaire_crise.json";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    function importerJSON(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = e => {
+        try {
+          const data = JSON.parse(e.target.result);
+          if (data.contacts) {
+            contacts = data.contacts;
+            afficherContacts();
+            alert("Import réussi !");
+          } else {
+            alert("Fichier JSON invalide (pas de 'contacts').");
+          }
+        } catch (err) {
+          alert("Erreur lors de la lecture du fichier JSON.");
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function rechercherContacts() {
+      const nom = document.getElementById("searchNom").value.toLowerCase();
+      const prenom = document.getElementById("searchPrenom").value.toLowerCase();
+      const structValues = Array.from(document.getElementById("searchStructure").selectedOptions).map(o=>o.value.toLowerCase());
+      const fonction = document.getElementById("searchFonction").value.toLowerCase();
+
+      const filtres = contacts.filter(c =>
+        c.nom.toLowerCase().includes(nom) &&
+        c.prenom.toLowerCase().includes(prenom) &&
+        (structValues.length === 0 || structValues.some(s => c.structure.toLowerCase().includes(s))) &&
+        (fonction === "" || c.fonction.toLowerCase() === fonction)
+      );
+      afficherContacts(filtres);
+    }
+
+    // Initialisation
+    chargerStructures();
+    chargerFonctions();
+    chargerContacts();
+  </script>
+</body>
+</html>

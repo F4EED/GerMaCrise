@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Création d’une activation - GerMaCrise</title>
+  <style>
+    body { margin:0; font-family:Arial,sans-serif; transition: background-color 0.3s, color 0.3s; }
+    body.light { background-color:#ffffff; color:#000000; }
+    body.dark { background-color:#000000; color:#ffd700; }
+
+    header { padding:10px; font-size:1.2em; font-weight:bold; }
+    h2 { margin-top:0; }
+
+    .form-section { margin:15px; }
+    label { display:block; margin-top:10px; }
+    input, select, textarea { width:100%; padding:5px; margin-top:3px; }
+    select[multiple] { height:100px; }
+    button { margin-top:10px; padding:5px 10px; cursor:pointer; }
+
+    table { width:100%; border-collapse:collapse; margin-top:20px; }
+    th, td { border:1px solid #999; padding:5px; text-align:left; }
+    th { background-color:rgba(0,0,0,0.1); }
+
+    /* Thème sombre */
+    body.dark table th { background-color:rgba(255,215,0,0.2); }
+    body.dark input, body.dark select, body.dark textarea, body.dark button { background-color:#333; color:#ffd700; border:1px solid #ffd700; }
+  </style>
+</head>
+<body class="light">
+  <header>Création d’une activation - GerMaCrise</header>
+
+  <div class="form-section">
+    <h2>Nouvelle activation</h2>
+
+    <label>ID (auto) <input type="text" id="idActivation" readonly></label>
+    <label>Titre <input type="text" id="titre"></label>
+    <label>Type <input type="text" id="type"></label>
+    <label>Date de création <input type="datetime-local" id="date_creation"></label>
+    <label>Date de clôture <input type="datetime-local" id="date_cloture"></label>
+    <label>Status 
+      <select id="status">
+        <option value="planifiée">Planifiée</option>
+        <option value="en cours">En cours</option>
+        <option value="clôturée">Clôturée</option>
+      </select>
+    </label>
+    <label>Responsable <input type="text" id="responsable"></label>
+    <label>Rédacteur <input type="text" id="redacteur"></label>
+    
+    <label>Structures impliquées
+      <select id="structure_implique" multiple></select>
+    </label>
+
+    <label>Commune
+      <select id="commune"></select>
+    </label>
+
+    <label>Secteur <input type="text" id="secteur"></label>
+    <label>Description
+      <textarea id="description_creation_activation"></textarea>
+    </label>
+
+    <button onclick="ajouterActivation()">Ajouter / Modifier</button>
+    <button onclick="resetForm()">Annuler</button>
+  </div>
+
+  <div class="form-section">
+    <h2>Liste des activations</h2>
+    <table id="tableActivations">
+      <thead>
+        <tr>
+          <th>ID</th><th>Titre</th><th>Status</th><th>Date création</th><th>Actions</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+    <button onclick="exporterJSON()">📥 Exporter en JSON</button>
+  </div>
+
+  <script>
+    window.addEventListener('message', e => {
+      if(e.data.theme) document.body.className = e.data.theme;
+    });
+
+    let activations = [];
+    let structures = [];
+    let communes = [];
+    let editIndex = null;
+
+    function genererId() {
+      const now = new Date();
+      return now.getFullYear().toString() +
+             String(now.getMonth()+1).padStart(2,'0') +
+             String(now.getDate()).padStart(2,'0') + "-" +
+             String(now.getHours()).padStart(2,'0') +
+             String(now.getMinutes()).padStart(2,'0') +
+             String(now.getSeconds()).padStart(2,'0');
+    }
+
+    // Charger structures depuis structure.json
+    async function chargerStructures() {
+      try {
+        const resp = await fetch("json/structure.json");
+        if(!resp.ok) throw new Error("Fichier JSON introuvable");
+        structures = await resp.json();
+      } catch(e) {
+        console.warn("Impossible de charger structures", e);
+        structures = [];
+      }
+      afficherStructuresDansForm();
+    }
+
+    function afficherStructuresDansForm(selected=[]) {
+      const select = document.getElementById('structure_implique');
+      select.innerHTML = '';
+      structures.forEach(s => {
+        const opt = document.createElement('option');
+        opt.value = s.nom;
+        opt.textContent = s.nom;
+        if(selected.includes(s.nom)) opt.selected = true;
+        select.appendChild(opt);
+      });
+    }
+
+    // Charger communes depuis geojson
+    async function chargerCommunes() {
+      try {
+        const resp = await fetch("geojson/D42/communes-42-loire.geojson");
+        if(!resp.ok) throw new Error("GeoJSON introuvable");
+        const data = await resp.json();
+        communes = data.features.map(f => f.properties.nom || f.properties.NOM || "Inconnu");
+      } catch(e) {
+        console.warn("Impossible de charger les communes", e);
+        communes = [];
+      }
+      afficherCommunesDansForm();
+    }
+
+    function afficherCommunesDansForm(selected="") {
+      const select = document.getElementById('commune');
+      select.innerHTML = '<option value="">-- Sélectionner une commune --</option>';
+      communes.sort().forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c;
+        opt.textContent = c;
+        if(c === selected) opt.selected = true;
+        select.appendChild(opt);
+      });
+    }
+
+    // Charger activations
+    async function chargerActivations() {
+      try {
+        const resp = await fetch("json/activations.json");
+        if(!resp.ok) throw new Error("Fichier JSON introuvable");
+        activations = await resp.json();
+      } catch(e) {
+        const data = localStorage.getItem("activations");
+        activations = data ? JSON.parse(data) : [];
+      }
+      afficherActivations();
+    }
+
+    function sauvegarderActivations() {
+      localStorage.setItem("activations", JSON.stringify(activations));
+    }
+
+    function ajouterActivation() {
+      const id = document.getElementById('idActivation').value || genererId();
+      const titre = document.getElementById('titre').value.trim();
+      const type = document.getElementById('type').value.trim();
+      const date_creation = document.getElementById('date_creation').value;
+      const date_cloture = document.getElementById('date_cloture').value;
+      const status = document.getElementById('status').value;
+      const responsable = document.getElementById('responsable').value.trim();
+      const redacteur = document.getElementById('redacteur').value.trim();
+      const structure_implique = Array.from(document.getElementById('structure_implique').selectedOptions).map(o => o.value);
+      const commune = document.getElementById('commune').value;
+      const secteur = document.getElementById('secteur').value.trim();
+      const description = document.getElementById('description_creation_activation').value.trim();
+
+      if(!titre) {
+        alert("Veuillez remplir le titre");
+        return;
+      }
+
+      const activation = { id, titre, type, date_creation, date_cloture, status, responsable, redacteur, structure_implique, commune, secteur, description_creation_activation: description };
+
+      if(editIndex !== null) {
+        activations[editIndex] = activation;
+        editIndex = null;
+      } else {
+        activations.push(activation);
+      }
+
+      sauvegarderActivations();
+      afficherActivations();
+      resetForm();
+    }
+
+    function afficherActivations() {
+      const tbody = document.getElementById('tableActivations').querySelector('tbody');
+      tbody.innerHTML = '';
+      activations.forEach((a, index) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${a.id}</td>
+          <td>${a.titre}</td>
+          <td>${a.status}</td>
+          <td>${a.date_creation}</td>
+          <td>
+            <button onclick="modifierActivation(${index})">✏</button>
+            <button onclick="supprimerActivation(${index})">🗑</button>
+          </td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function modifierActivation(index) {
+      const a = activations[index];
+      document.getElementById('idActivation').value = a.id;
+      document.getElementById('titre').value = a.titre;
+      document.getElementById('type').value = a.type;
+      document.getElementById('date_creation').value = a.date_creation;
+      document.getElementById('date_cloture').value = a.date_cloture;
+      document.getElementById('status').value = a.status;
+      document.getElementById('responsable').value = a.responsable;
+      document.getElementById('redacteur').value = a.redacteur;
+      document.getElementById('secteur').value = a.secteur;
+      document.getElementById('description_creation_activation').value = a.description_creation_activation;
+      afficherStructuresDansForm(a.structure_implique);
+      afficherCommunesDansForm(a.commune);
+      editIndex = index;
+    }
+
+    function supprimerActivation(index) {
+      if(confirm("Supprimer cette activation ?")) {
+        activations.splice(index,1);
+        sauvegarderActivations();
+        afficherActivations();
+      }
+    }
+
+    function resetForm() {
+      document.getElementById('idActivation').value = genererId();
+      document.getElementById('titre').value = '';
+      document.getElementById('type').value = '';
+      document.getElementById('date_creation').value = new Date().toISOString().slice(0,16);
+      document.getElementById('date_cloture').value = '';
+      document.getElementById('status').value = 'planifiée';
+      document.getElementById('responsable').value = '';
+      document.getElementById('redacteur').value = '';
+      document.getElementById('secteur').value = '';
+      document.getElementById('description_creation_activation').value = '';
+      afficherStructuresDansForm();
+      afficherCommunesDansForm();
+      editIndex = null;
+    }
+
+    function exporterJSON() {
+      const dataStr = JSON.stringify(activations, null, 2);
+      const blob = new Blob([dataStr], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "activations.json";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    // Initialisation
+    chargerStructures();
+    chargerCommunes();
+    chargerActivations();
+    resetForm();
+  </script>
+</body>
+</html>

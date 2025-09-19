@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Annuaire des sites industriels - GerMaCrise</title>
+<style>
+body { margin:0; font-family:Arial,sans-serif; transition: background-color 0.3s, color 0.3s; }
+body.light { background-color:#fff; color:#000; }
+body.dark { background-color:#000; color:#ffd700; }
+
+header { padding:10px; font-size:1.2em; font-weight:bold; }
+h2 { margin-top:0; }
+
+.form-section { margin:15px; }
+label { display:block; margin-top:10px; }
+input, select, textarea { width:100%; padding:5px; margin-top:3px; box-sizing:border-box; }
+button { margin-top:10px; padding:5px 10px; cursor:pointer; }
+
+table { width:100%; border-collapse:collapse; margin-top:10px; }
+th, td { border:1px solid #999; padding:5px; text-align:left; vertical-align:top; }
+th { background-color:rgba(0,0,0,0.1); }
+
+body.dark table { background-color:#111; }
+body.dark table th { background-color:rgba(255,215,0,0.12); }
+body.dark td { background-color:#151515; border-color:#444; }
+
+body.dark label,
+body.dark h2,
+body.dark header,
+body.dark p.instruction,
+body.dark th,
+body.dark td {
+  color: #ffd700;
+}
+
+body.dark input, 
+body.dark select, 
+body.dark textarea, 
+body.dark button {
+  background-color:#222; 
+  color:#ffd700; 
+  border:1px solid #ffd700;
+}
+
+body.dark iframe {
+  background-color:#222;
+  border:1px solid #ffd700;
+}
+
+p.instruction { font-size:0.9em; color:gray; margin-top:5px; }
+.btn-group { margin-top:10px; }
+.btn-group button { margin-right:10px; }
+
+.pdf-preview { margin-top:5px; border:1px solid #ccc; border-radius:4px; overflow:hidden; }
+.pdf-preview iframe { width:100%; height:260px; border:0; display:block; }
+</style>
+</head>
+<body class="light">
+<header>Annuaire des sites industriels - GerMaCrise</header>
+
+<!-- Section Liste des sites industriels -->
+<div class="form-section">
+  <h2>Liste des sites industriels</h2>
+  <label>Afficher uniquement les sites avec PPI valide
+    <input type="checkbox" id="filterPPI" onchange="rechercherSites()">
+  </label>
+
+  <table id="tableSites" aria-live="polite">
+    <thead>
+      <tr>
+        <th>Nom entreprise</th><th>Nom dirigeant</th><th>Tél. dirigeant</th><th>Secteur activité</th>
+        <th>Adresse postale</th><th>Email</th><th>Surface</th><th>Nb bâtiments</th>
+        <th>Risques</th><th>PPI</th><th>Chemin accès PPI</th><th>Status PPI</th><th>Actions</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <div class="btn-group">
+    <button onclick="exporterJSON()">📥 Exporter en JSON</button>
+    <button onclick="exporterGeoJSON()">🌐 Exporter en GeoJSON</button>
+    <button onclick="document.getElementById('importFile').click()">📤 Importer un JSON</button>
+    <input type="file" id="importFile" accept=".json" onchange="importerJSON(event)" style="display:none;">
+  </div>
+
+  <p class="instruction">
+    ⚠️ Pour mettre à jour la source permanente, déplacez ou remplacez le fichier dans le dossier <code>json/</code> (serveur).
+  </p>
+</div>
+
+<!-- Section Recherche multicritère -->
+<div class="form-section">
+  <h2>Recherche multicritère</h2>
+  <label>Nom entreprise <input type="text" id="searchNom" oninput="rechercherSites()" placeholder="Recherche par nom..."></label>
+  <label>Secteur activité <input type="text" id="searchSecteur" oninput="rechercherSites()" placeholder="Recherche par secteur..."></label>
+  <label>Risques
+    <select id="searchRisques" multiple onchange="rechercherSites()"></select>
+  </label>
+  <label>Statut PPI
+    <select id="searchStatusPPI" onchange="rechercherSites()">
+      <option value="">Tous</option>
+      <option value="valide">Valide</option>
+      <option value="invalide">Invalide</option>
+      <option value="a_mettre_a_jour">À mettre à jour</option>
+    </select>
+  </label>
+</div>
+
+<!-- Section Ajouter / Modifier site industriel -->
+<div class="form-section" id="formSection">
+  <h2>Ajouter / Modifier un site industriel</h2>
+  <label>Nom entreprise <input type="text" id="nom_entreprise"></label>
+  <label>Nom dirigeant <input type="text" id="nom_dirigeant"></label>
+  <label>Téléphone dirigeant <input type="text" id="tel_dirigeant"></label>
+  <label>Secteur activité <input type="text" id="secteur_activite"></label>
+  <label>Adresse postale <input type="text" id="adresse_postale"></label>
+  <label>Adresse email <input type="email" id="adresse_mail"></label>
+  <label>Surface (m²) <input type="number" id="surface" min="0"></label>
+  <label>Nombre de bâtiments <input type="number" id="nb_batiment" min="0"></label>
+
+  <label>Risques
+    <select id="risques" multiple></select>
+  </label>
+
+  <label>PPI
+    <select id="ppi">
+      <option value="oui">Oui</option>
+      <option value="non">Non</option>
+    </select>
+  </label>
+
+  <label>Chemin accès PPI
+    <input type="text" id="chemin_acces_ppi" readonly placeholder="Aucun document sélectionné">
+    <input type="file" id="filePPI" style="display:none" accept=".pdf" onchange="chargerPDF(event)">
+    <button type="button" onclick="document.getElementById('filePPI').click()">📁 Sélectionner un PDF PPI</button>
+  </label>
+
+  <div class="pdf-preview" id="pdfPreviewContainer" style="display:none;">
+    <iframe id="pdfPreview" src=""></iframe>
+    <div style="padding:8px; text-align:right;">
+      <button type="button" id="btnOpenPDF" onclick="ouvrirPDF()">Ouvrir PDF dans une nouvelle fenêtre</button>
+    </div>
+  </div>
+
+  <label>Status PPI
+    <select id="status_ppi">
+      <option value="valide">Valide</option>
+      <option value="invalide">Invalide</option>
+      <option value="a_mettre_a_jour">À mettre à jour</option>
+    </select>
+  </label>
+
+  <div class="btn-group">
+    <button onclick="ajouterSite()">Ajouter / Modifier</button>
+    <button onclick="resetForm()" type="button">Annuler</button>
+  </div>
+</div>
+
+<script>
+// --- THEME ---
+(function applySavedTheme(){
+  const savedTheme = localStorage.getItem("theme") || "light";
+  document.body.className = savedTheme;
+})();
+window.addEventListener('message', e => {
+  if (e.data && e.data.theme) {
+    document.body.className = e.data.theme;
+    localStorage.setItem("theme", e.data.theme);
+  }
+});
+
+// Données
+let sites = [];
+let risques = [];
+let editIndex = null;
+let pdfURL = "";
+
+// Charger risques
+async function chargerRisques() {
+  try { const resp = await fetch("json/risques.json", {cache: "no-store"}); if (resp.ok) risques = await resp.json(); } catch(e){ risques=[]; }
+  const selectAdd = document.getElementById("risques");
+  const selectSearch = document.getElementById("searchRisques");
+  selectAdd.innerHTML=''; selectSearch.innerHTML='';
+  risques.forEach(r => {
+    const optA = document.createElement("option"); optA.value=r.risque; optA.textContent=r.risque; selectAdd.appendChild(optA);
+    const optS = document.createElement("option"); optS.value=r.risque; optS.textContent=r.risque; selectSearch.appendChild(optS);
+  });
+}
+
+// Charger sites
+async function chargerSites() {
+  try {
+    const resp = await fetch("json/liste_site_industriel.json", {cache:"no-store"});
+    if(resp.ok) { const data = await resp.json(); sites = Array.isArray(data)?data:(data.sites||[]); localStorage.setItem("sites", JSON.stringify(sites)); }
+  } catch(e){ const saved = localStorage.getItem("sites"); sites = saved?JSON.parse(saved):[]; }
+  afficherSites();
+}
+
+// Sauvegarde
+function sauvegarderSites(){ localStorage.setItem("sites", JSON.stringify(sites)); }
+
+// Ajouter / Modifier
+function ajouterSite(){
+  const chemin = pdfURL || document.getElementById("chemin_acces_ppi").value || "";
+  const site = {
+    id: editIndex!==null?sites[editIndex].id:"site_"+Date.now(),
+    nom_entreprise: document.getElementById("nom_entreprise").value.trim(),
+    nom_dirigeant: document.getElementById("nom_dirigeant").value.trim(),
+    tel_dirigeant: document.getElementById("tel_dirigeant").value.trim(),
+    secteur_activite: document.getElementById("secteur_activite").value.trim(),
+    adresse_postale: document.getElementById("adresse_postale").value.trim(),
+    adresse_mail: document.getElementById("adresse_mail").value.trim(),
+    surface: document.getElementById("surface").value.trim(),
+    nb_batiment: document.getElementById("nb_batiment").value.trim(),
+    risques: Array.from(document.getElementById("risques").selectedOptions).map(o=>o.value).join(", "),
+    ppi: document.getElementById("ppi").value,
+    chemin_acces_ppi: chemin,
+    status_ppi: document.getElementById("status_ppi").value
+  };
+  if(editIndex!==null){ sites[editIndex]=site; editIndex=null; } else { sites.push(site); }
+  sauvegarderSites(); afficherSites(); resetForm();
+}
+
+// Affichage tableau
+function afficherSites(list=sites){
+  const tbody = document.getElementById("tableSites").querySelector("tbody");
+  const filterPPI = document.getElementById("filterPPI").checked;
+  tbody.innerHTML='';
+  list.forEach((s,index)=>{
+    if(filterPPI && s.status_ppi!=="valide") return;
+    const tr=document.createElement("tr");
+    const ppiText=(s.ppi==="oui"||s.ppi===true||s.ppi==="true")?"Oui":"Non";
+    const cheminCell = s.chemin_acces_ppi ? `<button type="button" onclick="ouvrirPDF('${escapeHtml(s.chemin_acces_ppi)}')">Ouvrir PDF</button>` : "";
+    tr.innerHTML=`
+      <td>${escapeHtml(s.nom_entreprise||"")}</td>
+      <td>${escapeHtml(s.nom_dirigeant||"")}</td>
+      <td>${escapeHtml(s.tel_dirigeant||"")}</td>
+      <td>${escapeHtml(s.secteur_activite||"")}</td>
+      <td>${escapeHtml(s.adresse_postale||"")}</td>
+      <td>${escapeHtml(s.adresse_mail||"")}</td>
+      <td>${escapeHtml(s.surface||"")}</td>
+      <td>${escapeHtml(s.nb_batiment||"")}</td>
+      <td>${escapeHtml(s.risques||"")}</td>
+      <td>${ppiText}</td>
+      <td>${cheminCell}</td>
+      <td>${escapeHtml(s.status_ppi||"")}</td>
+      <td>
+        <button type="button" onclick="modifierSite(${index})">✏</button>
+        <button type="button" onclick="supprimerSite(${index})">🗑</button>
+      </td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+// Modifier / Supprimer / Reset
+function modifierSite(index){
+  const s=sites[index];
+  ["nom_entreprise","nom_dirigeant","tel_dirigeant","secteur_activite","adresse_postale","adresse_mail","surface","nb_batiment","ppi","chemin_acces_ppi","status_ppi"].forEach(id=>{
+    document.getElementById(id).value = s[id] || (id==="ppi"?"non":"");
+  });
+  Array.from(document.getElementById("risques").options).forEach(opt=>{
+    opt.selected=(s.risques||"").split(", ").includes(opt.value);
+  });
+  if(s.chemin_acces_ppi){ pdfURL=s.chemin_acces_ppi; showPdfPreview(pdfURL); } else { hidePdfPreview(); pdfURL=""; }
+  editIndex=index;
+}
+
+function supprimerSite(index){ if(confirm("Supprimer ce site ?")){ sites.splice(index,1); sauvegarderSites(); afficherSites(); } }
+function resetForm(){ document.querySelectorAll('.form-section input, .form-section textarea').forEach(el=>{ if(el.type==="checkbox"||el.type==="radio") el.checked=false; else el.value=''; }); document.getElementById("risques").selectedIndex=-1; document.getElementById("ppi").value="non"; document.getElementById("status_ppi").value="valide"; document.getElementById("chemin_acces_ppi").value=""; document.getElementById("filePPI").value=""; hidePdfPreview(); pdfURL=""; editIndex=null; }
+
+// Import / Export JSON
+function exporterJSON(){ const dataStr=JSON.stringify(sites,null,2); const blob=new Blob([dataStr],{type:"application/json"}); const url=URL.createObjectURL(blob); const a=document.createElement("a"); a.href=url; a.download="liste_site_industriel.json"; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url); }
+function exporterGeoJSON(){
+  const geo = { type:"FeatureCollection", features: [] };
+  sites.forEach(s=>{
+    if(!s.adresse_postale) return;
+    // ici on utilise adresse comme propriété, il faut que cartoff gère géocodage
+    geo.features.push({
+      type:"Feature",
+      geometry: { type:"Point", coordinates: [0,0] }, // placeholder, à géocoder dans cartoff
+      properties: {...s}
+    });
+  });
+  const blob=new Blob([JSON.stringify(geo,null,2)],{type:"application/json"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a"); a.href=url; a.download="sites_industriels.geojson"; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+}
+function importerJSON(event){ const file=event.target.files[0]; if(!file) return; const reader=new FileReader(); reader.onload=e=>{ try{ const data=JSON.parse(e.target.result); sites=Array.isArray(data)?data:(data.sites||data); sauvegarderSites(); afficherSites(); alert("Import réussi !"); } catch(err){ alert("Fichier JSON invalide."); console.error(err); } }; reader.readAsText(file); }
+
+// Recherche
+function rechercherSites(){
+  const nom=(document.getElementById("searchNom").value||"").toLowerCase();
+  const secteur=(document.getElementById("searchSecteur").value||"").toLowerCase();
+  const risquesSel=Array.from(document.getElementById("searchRisques").selectedOptions).map(o=>o.value.toLowerCase());
+  const filterPPI=document.getElementById("filterPPI").checked;
+  const statusPPI=document.getElementById("searchStatusPPI").value;
+  const filtres=sites.filter(s=>{
+    const okNom=(s.nom_entreprise||"").toLowerCase().includes(nom);
+    const okSect=(s.secteur_activite||"").toLowerCase().includes(secteur);
+    const okRisques=(risquesSel.length===0)||risquesSel.some(r=>(s.risques||"").toLowerCase().includes(r));
+    const okPPI=!filterPPI||s.status_ppi==="valide";
+    const okStatus=!statusPPI||s.status_ppi===statusPPI;
+    return okNom && okSect && okRisques && okPPI && okStatus;
+  });
+  afficherSites(filtres);
+}
+
+// PDF
+function chargerPDF(event){ const file=event.target.files[0]; if(!file) return; if(pdfURL && pdfURL.startsWith("blob:")) URL.revokeObjectURL(pdfURL); pdfURL=URL.createObjectURL(file); document.getElementById("chemin_acces_ppi").value=file.name; showPdfPreview(pdfURL); }
+function showPdfPreview(url){ const container=document.getElementById("pdfPreviewContainer"); const iframe=document.getElementById("pdfPreview"); iframe.src=url; container.style.display="block"; }
+function hidePdfPreview(){ const container=document.getElementById("pdfPreviewContainer"); const iframe=document.getElementById("pdfPreview"); iframe.src=""; container.style.display="none"; }
+function ouvrirPDF(url){ const finalUrl=url||pdfURL; if(!finalUrl){ alert("Aucun PDF disponible."); return; } window.open(finalUrl,"_blank"); }
+function escapeHtml(str){ if(str===null||str===undefined) return ""; return String(str).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;"); }
+
+// Initialisation
+chargerRisques();
+chargerSites();
+window.addEventListener('focus', ()=>{ chargerSites(); });
+</script>
+</body>
+</html>

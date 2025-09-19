@@ -1,0 +1,317 @@
+<!-- 
+  ===============================================
+  Projet cartoff - cartographie offline
+  Version : V1.1-stable
+  Auteurs : ChatGPT - Frédéric Bouchet, Valentin Saugnier
+  Description :
+    - Carte Leaflet fonctionnant hors-ligne avec un fond vectoriel .pmtiles
+    - Gestion de calques GeoJSON par catégories
+    - Couches avec ou sans zoom automatique (selon paramétrage)
+    - Légende dynamique qui s’actualise en fonction des calques visibles
+    - Sélecteurs pour zoomer sur une commune (Loire & Corse)
+    - Affichage des coordonnées + zoom + toponyme sous la souris
+    - Affichage version + date/heure flottant, déplaçable et mémorisé
+  Changements depuis V1-stable :
+    - Passage à V1.1-stable
+    - Ajout du contrôle flottant version+date+heure déplaçable
+    - Mémorisation de la position du contrôle via localStorage
+    - Commentaires supplémentaires dans le code
+  ===============================================
+-->
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<title>cartoff - cartographie offline</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<link rel="stylesheet" href="css/leaflet.css" />
+<style>
+html, body { margin:0; height:100%; }
+#map { width:100%; height:100vh; background:#ccc; }
+
+/* Sidebar */
+.sidebar { 
+  position:absolute; top:10px; right:10px; z-index:2000; 
+  background:white; padding:10px; border-radius:8px; 
+  box-shadow:0 2px 6px rgba(0,0,0,0.3); max-width:300px; 
+  font-family:Arial,sans-serif; font-size:14px; 
+  user-select:none; 
+}
+.sidebar-header { cursor: grab; font-weight:bold; margin-bottom:8px; }
+details summary { cursor:pointer; font-weight:bold; }
+details { margin-bottom:5px; }
+label { cursor:pointer; display:block; }
+
+/* Coordonnées */
+#coords { 
+  position:absolute; bottom:10px; left:10px; z-index:3000; 
+  background:rgba(255,255,255,0.9); padding:6px 10px; 
+  border-radius:6px; font-family:Arial,sans-serif; font-size:13px; 
+  box-shadow:0 1px 4px rgba(0,0,0,0.3); min-width:260px; 
+  user-select:none; pointer-events:none; 
+}
+
+/* Légende */
+#legend { margin-top:10px; border-top:1px solid #ccc; padding-top:5px; font-size:13px; }
+#sidebarLogo { display:block; margin:10px auto 0 auto; max-width:100%; }
+
+/* Version flottante */
+#versionFloating {
+  position:absolute;
+  z-index:4000;
+  background: rgba(0,0,0,0.7);
+  color:white;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-family: Arial,sans-serif;
+  font-size: 12px;
+  cursor: move;
+  user-select:none;
+  text-align:center;
+}
+</style>
+</head>
+<body>
+<div class="sidebar" id="layerMenu">
+  <div class="sidebar-header" id="dragHandle">Calques GeoJSON (déplacer ici)</div>
+
+  <details open>
+    <summary>Département de la Loire</summary>
+    <div id="departementLayers"></div>
+    <label for="communeSelect"><b>Zoom sur une commune :</b></label>
+    <select id="communeSelect"><option value="">-- Choisir une commune --</option></select>
+  </details>
+
+  <details open>
+    <summary>Gestion des risques</summary>
+    <div id="riskLayers"></div>
+  </details>
+
+  <details open>
+    <summary>Associations Agréées de Sécurité Civile</summary>
+    <div id="AASCLayers"></div>
+  </details>
+
+  <details open>
+    <summary>Départements de Corse</summary>
+    <div id="CorseLayers"></div>
+    <label for="communeCorseSelect"><b>Zoom sur une commune :</b></label>
+    <select id="communeCorseSelect"><option value="">-- Choisir une commune --</option></select>
+  </details>
+
+  <div id="legend"><b>Légende :</b><br>– aucun calque actif –</div>
+  <img src="images/Logo_F4EED.png" id="sidebarLogo" alt="Logo D42">
+</div>
+
+<div id="map"></div>
+<div id="coords">Déplacez la souris sur la carte...</div>
+<div id="versionFloating"></div>
+
+<script src="js/leaflet.js"></script>
+<script src="js/protomaps-leaflet.js"></script>
+<script>
+// =============================
+// Initialisation de la carte
+// =============================
+const map = L.map('map').setView([45.7885, 4.1830], 9);
+protomapsL.leafletLayer({ url: "pmtiles/mymap.pmtiles", flavor: 'light', lang: 'fr' }).addTo(map);
+
+const coordsDiv = document.getElementById('coords');
+const legendDiv = document.getElementById('legend');
+let currentToponyme = null;
+
+map.on('mousemove', e => {
+  coordsDiv.innerHTML = `Lat: ${e.latlng.lat.toFixed(5)}, Lon: ${e.latlng.lng.toFixed(5)} | Zoom: ${map.getZoom()}${currentToponyme ? ' | ' + currentToponyme : ''}`;
+});
+
+// =============================
+// Icônes personnalisés
+// =============================
+const icons = {
+  "Point de Repère routier": L.icon({ iconUrl: 'images/PR.png', iconSize: [32,32], iconAnchor:[16,32], popupAnchor:[0,-32]}),
+  "Centre d'Icendie et Secours": L.icon({ iconUrl: 'images/CIS.png', iconSize: [32,32], iconAnchor:[16,32], popupAnchor:[0,-32]}),
+  "Entreprises SEVESO": L.icon({ iconUrl: 'images/SEVEZO.png', iconSize: [32,32], iconAnchor:[16,32], popupAnchor:[0,-32]})
+};
+
+// =============================
+// Variables pour les couches et highlights
+// =============================
+const layers = {}, communesLoireIndex = {}, communesCorseIndex = {};
+let highlightLayer = null, highlightCorseLayer = null;
+
+// =============================
+// Fichiers GeoJSON
+// =============================
+const geojsonFiles = {
+  departement:[
+    {name:"Point de Repère routier",file:"geojson/D42/PR_Routier.geojson",style:{color:"blue",weight:3},minZoom:14,noAutoZoom:true},
+    {name:"Communes de La Loire",file:"geojson/D42/communes-42-loire.geojson",style:{color:"#A0522D",weight:2,dashArray:"4 4",fill:false},isCommuneList:true},
+    {name:"Habitation",file:"geojson/D42/Zone_habitation.geojson",style:{color:"darkred",weight:3},noAutoZoom:true},
+    {name:"Lieu dit :: non habitable",file:"geojson/D42/Lieu_dit_non_habite.geojson",style:{color:"darkred",weight:3},minZoom:16,noAutoZoom:true},
+    {name:"Lieu dit :: habitable",file:"geojson/D42/Toponyme.geojson",style:{color:"darkred",weight:3},minZoom:16,noAutoZoom:true}
+  ],
+  risks:[
+    {name:"Centre d'Icendie et Secours",file:"geojson/D42/CIS.geojson",style:{color:"red",weight:2,dashArray:'4 4'},noAutoZoom:true},
+    {name:"Entreprises SEVESO",file:"geojson/D42/Ets_SEVESO.geojson",style:{color:"darkred",weight:3},noAutoZoom:true}
+  ],
+  AASC:[
+    {name:"PIO UDIOM(42)",file:"geojson/D42/UDIOM42.geojson",style:{color:"red",weight:2,dashArray:'4 4'}}
+  ],
+  Corse:[
+    {name:"Communes Corse",file:"geojson/Corse/communes-corse.geojson",style:{color:"#A0522D",weight:2,dashArray:"4 4",fill:false},isCommuneList:true},
+    {name:"TKNet",file:"geojson/Corse/TKNET.geojson",style:{color:"green",weight:2,dashArray:"3 3"},minZoom:10}
+  ]
+};
+
+// =============================
+// Mise à jour de la légende
+// =============================
+function updateLegend(){
+  const active = Object.entries(layers).filter(([name,layer])=>map.hasLayer(layer));
+  if(active.length===0) legendDiv.innerHTML="<b>Légende :</b><br>– aucun calque actif –";
+  else legendDiv.innerHTML="<b>Légende :</b><br>"+active.map(([name])=>"– "+name).join("<br>");
+}
+
+// =============================
+// Ajout checkbox pour chaque calque
+// =============================
+function addCheckbox(div,name,layer,item){
+  const id = "chk_"+name.replace(/\s+/g,'_');
+  const label = document.createElement("label");
+  label.htmlFor=id;
+  const checkbox=document.createElement("input");
+  checkbox.type="checkbox";
+  checkbox.id=id;
+  checkbox.addEventListener("change",e=>{
+    if(e.target.checked){
+      layer.addTo(map);
+      if(layer.getBounds && !item.noAutoZoom) map.fitBounds(layer.getBounds(),{padding:[20,20]});
+    }else map.removeLayer(layer);
+    updateLegend();
+  });
+  label.appendChild(checkbox);
+  label.appendChild(document.createTextNode(" "+name));
+  div.appendChild(label);
+}
+
+// =============================
+// Chargement des fichiers GeoJSON
+// =============================
+async function loadGeoJSONLayer(item){
+  try{
+    const res = await fetch(item.file);
+    if(!res.ok) throw new Error("Erreur chargement "+item.file);
+    const geojson = await res.json();
+    const layer = L.geoJSON(geojson,{
+      style:item.style,
+      pointToLayer:(f,latlng)=>icons[item.name]?L.marker(latlng,{icon:icons[item.name]}):L.circleMarker(latlng,item.style),
+      onEachFeature:(feature,l)=>{
+        if(feature.properties){
+          let popup="";
+          for(const key in feature.properties) popup+=`<b>${key}:</b> ${feature.properties[key]}<br>`;
+          l.bindPopup(popup);
+        }
+        if(item.isCommuneList){
+          const index = item.name==="Communes de La Loire"? communesLoireIndex : communesCorseIndex;
+          index[feature.properties.code]=feature;
+          const select=document.getElementById(item.name==="Communes de La Loire"? "communeSelect":"communeCorseSelect");
+          const opt=document.createElement("option");
+          opt.value=feature.properties.code;
+          opt.textContent=feature.properties.nom;
+          select.appendChild(opt);
+
+          l.on('mouseover',()=>currentToponyme=feature.properties.nom);
+          l.on('mouseout',()=>currentToponyme=null);
+        }
+      }
+    });
+    layers[item.name]=layer;
+    return layer;
+  }catch(err){ console.error(err); alert(err); return null; }
+}
+
+// =============================
+// Setup des calques et événements
+// =============================
+async function setupLayers(){
+  for(const [cat,items] of Object.entries(geojsonFiles)){
+    const div = document.getElementById(
+      cat==="departement"? "departementLayers":
+      cat==="risks"? "riskLayers":
+      cat==="AASC"? "AASCLayers":
+      "CorseLayers"
+    );
+    for(const item of items){
+      const layer = await loadGeoJSONLayer(item);
+      if(layer) addCheckbox(div,item.name,layer,item);
+    }
+  }
+
+  document.getElementById("communeSelect").addEventListener("change",e=>{
+    const code = e.target.value;
+    if(!code || !communesLoireIndex[code]) return;
+    if(highlightLayer) map.removeLayer(highlightLayer);
+    highlightLayer = L.geoJSON(communesLoireIndex[code],{style:{color:"blue",weight:3,fillOpacity:0.3}}).addTo(map);
+    map.fitBounds(highlightLayer.getBounds(),{padding:[20,20]});
+    setTimeout(()=>{map.removeLayer(highlightLayer); highlightLayer=null; updateLegend();},8000);
+  });
+
+  document.getElementById("communeCorseSelect").addEventListener("change",e=>{
+    const code = e.target.value;
+    if(!code || !communesCorseIndex[code]) return;
+    if(highlightCorseLayer) map.removeLayer(highlightCorseLayer);
+    highlightCorseLayer = L.geoJSON(communesCorseIndex[code],{style:{color:"blue",weight:3,fillOpacity:0.3}}).addTo(map);
+    map.fitBounds(highlightCorseLayer.getBounds(),{padding:[20,20]});
+    setTimeout(()=>{map.removeLayer(highlightCorseLayer); highlightCorseLayer=null; updateLegend();},8000);
+  });
+}
+
+setupLayers();
+
+// =============================
+// Contrôle version flottant V1.1-stable
+// =============================
+const versionDiv = document.getElementById("versionFloating");
+const version = "V1.1-stable";
+
+function updateVersion(){
+  const now=new Date();
+  const dateStr = now.toLocaleDateString("fr-FR");
+  const timeStr = now.toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"});
+  versionDiv.innerHTML=`<b>${version}</b> – ${dateStr} ${timeStr}`;
+}
+updateVersion();
+setInterval(updateVersion,60*1000);
+
+// Position initiale ou mémorisée
+let savedPos = JSON.parse(localStorage.getItem("versionPos"));
+if(savedPos){ versionDiv.style.left=savedPos.left; versionDiv.style.top=savedPos.top; }
+else{
+  versionDiv.style.bottom="10px";
+  versionDiv.style.left="50%";
+  versionDiv.style.transform="translateX(-50%)";
+}
+
+// Drag & Drop
+let isDragging=false, offsetX=0, offsetY=0;
+versionDiv.addEventListener('mousedown',e=>{
+  isDragging=true;
+  versionDiv.style.transform="none";
+  offsetX=e.clientX - versionDiv.getBoundingClientRect().left;
+  offsetY=e.clientY - versionDiv.getBoundingClientRect().top;
+});
+document.addEventListener('mousemove',e=>{
+  if(!isDragging) return;
+  versionDiv.style.left=(e.clientX-offsetX)+"px";
+  versionDiv.style.top=(e.clientY-offsetY)+"px";
+});
+document.addEventListener('mouseup',e=>{
+  if(isDragging){
+    isDragging=false;
+    localStorage.setItem("versionPos",JSON.stringify({left:versionDiv.style.left,top:versionDiv.style.top}));
+  }
+});
+</script>
+</body>
+</html>

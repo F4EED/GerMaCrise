@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Lieux d'accueil - GerMaCrise</title>
+<style>
+body { margin:0; font-family:Arial,sans-serif; transition: background-color 0.3s, color 0.3s; }
+body.light { background-color:#fff; color:#000; }
+
+header { padding:10px; font-size:1.2em; font-weight:bold; }
+h2 { margin-top:0; }
+
+.form-section { margin:15px; }
+label { display:block; margin-top:10px; }
+input, select, textarea { width:100%; padding:5px; margin-top:3px; }
+button { margin-top:10px; padding:5px 10px; cursor:pointer; }
+
+table { width:100%; border-collapse:collapse; margin-top:20px; }
+th, td { border:1px solid #999; padding:5px; text-align:left; cursor:pointer; }
+th { background-color:rgba(0,0,0,0.1); }
+
+th.no-sort { cursor:default; }
+
+p.instruction { font-size:0.9em; color:gray; margin-top:5px; }
+</style>
+</head>
+<body class="light">
+
+<header>Gestion des lieux d'accueil - GerMaCrise</header>
+
+<div class="form-section">
+  <h2>Ajouter / Modifier un lieu</h2>
+  <label>Nom du site <input type="text" id="nom_site"></label>
+  <label>Commune 
+    <select id="commune">
+      <option value="">Chargement...</option>
+    </select>
+  </label>
+  <label>Surface (m²) <input type="number" id="surface"></label>
+  <label>Nombre d'accueil <input type="number" id="nb_accueil"></label>
+  <label>Nombre d'hébergement <input type="number" id="nb_hebergement"></label>
+  <label>Nombre de ravitaillement <input type="number" id="nb_ravitaillement"></label>
+  <label>Autres ressources <textarea id="autres_ressource"></textarea></label>
+  <label>Téléphone du responsable <input type="text" id="telephone_responsable"></label>
+  <label>Adresse <textarea id="adresse"></textarea></label>
+  <button onclick="ajouterLieu()">Ajouter / Modifier</button>
+  <button onclick="resetForm()">Annuler</button>
+</div>
+
+<div class="form-section">
+  <h2>Liste des lieux d'accueil</h2>
+  <label>Filtrer par nom ou commune: <input type="text" id="filterInput" onkeyup="filtrerLieux()"></label>
+  <table id="tableLieux">
+    <thead>
+      <tr>
+        <th onclick="trierTable(0)">Nom</th>
+        <th onclick="trierTable(1)">Commune</th>
+        <th onclick="trierTable(2)">Surface (m²)</th>
+        <th onclick="trierTable(3)">Nb accueil</th>
+        <th onclick="trierTable(4)">Nb hébergement</th>
+        <th onclick="trierTable(5)">Nb ravitaillement</th>
+        <th class="no-sort">Actions</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+  <button onclick="exporterJSON()">📥 Exporter en JSON</button>
+  <button onclick="importerJSON()">📂 Importer JSON</button>
+  <p class="instruction">⚠️ Pour mettre à jour la source, déplacez le fichier téléchargé dans le dossier <code>json/</code>.</p>
+</div>
+
+<script>
+let lieux = [];
+let editIndex = null;
+
+// Chargement communes depuis GeoJSON
+async function chargerCommunes() {
+  try {
+    const resp = await fetch('geojson/D42/communes-42-loire.geojson');
+    const data = await resp.json();
+    const select = document.getElementById('commune');
+    select.innerHTML = '';
+    const communes = data.features.map(f => f.properties.nom).sort();
+    communes.forEach(c => {
+      const option = document.createElement('option');
+      option.value = c;
+      option.textContent = c;
+      select.appendChild(option);
+    });
+  } catch(e) {
+    console.error("Erreur chargement communes:", e);
+  }
+}
+
+// Charger lieux depuis JSON localStorage ou fichier
+async function chargerLieux() {
+  try {
+    const resp = await fetch("json/accueil_lieu.json");
+    if(!resp.ok) throw new Error("Fichier JSON introuvable");
+    lieux = (await resp.json()).lieux_accueil;
+    console.log("Lieux chargés depuis json/accueil_lieu.json");
+  } catch(e) {
+    console.warn("Chargement depuis localStorage", e);
+    const data = localStorage.getItem("lieux");
+    lieux = data ? JSON.parse(data) : [];
+  }
+  afficherLieux();
+}
+
+function sauvegarderLieux() {
+  localStorage.setItem("lieux", JSON.stringify(lieux));
+}
+
+function ajouterLieu() {
+  const nom_site = document.getElementById('nom_site').value.trim();
+  const commune = document.getElementById('commune').value;
+  const surface = parseInt(document.getElementById('surface').value) || 0;
+  const nb_accueil = parseInt(document.getElementById('nb_accueil').value) || 0;
+  const nb_hebergement = parseInt(document.getElementById('nb_hebergement').value) || 0;
+  const nb_ravitaillement = parseInt(document.getElementById('nb_ravitaillement').value) || 0;
+  const autres_ressource = document.getElementById('autres_ressource').value.trim();
+  const telephone_responsable = document.getElementById('telephone_responsable').value.trim();
+  const adresse = document.getElementById('adresse').value.trim();
+
+  if(!nom_site || !commune){
+    alert("Veuillez remplir le nom du site et la commune");
+    return;
+  }
+
+  const lieu = {
+    id: editIndex!==null ? lieux[editIndex].id : 'lieu_'+Date.now(),
+    nom_site, commune, surface, nb_accueil, nb_hebergement, nb_ravitaillement, 
+    autres_ressource, telephone_responsable, adresse
+  };
+
+  if(editIndex !== null){
+    lieux[editIndex] = lieu;
+    editIndex = null;
+  } else {
+    lieux.push(lieu);
+  }
+
+  sauvegarderLieux();
+  afficherLieux();
+  resetForm();
+}
+
+function afficherLieux() {
+  const tbody = document.getElementById('tableLieux').querySelector('tbody');
+  tbody.innerHTML = '';
+  lieux.forEach((l,index) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${l.nom_site}</td>
+      <td>${l.commune}</td>
+      <td>${l.surface}</td>
+      <td>${l.nb_accueil}</td>
+      <td>${l.nb_hebergement}</td>
+      <td>${l.nb_ravitaillement}</td>
+      <td>
+        <button onclick="modifierLieu(${index})">✏</button>
+        <button onclick="supprimerLieu(${index})">🗑</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function modifierLieu(index) {
+  const l = lieux[index];
+  document.getElementById('nom_site').value = l.nom_site;
+  document.getElementById('commune').value = l.commune;
+  document.getElementById('surface').value = l.surface;
+  document.getElementById('nb_accueil').value = l.nb_accueil;
+  document.getElementById('nb_hebergement').value = l.nb_hebergement;
+  document.getElementById('nb_ravitaillement').value = l.nb_ravitaillement;
+  document.getElementById('autres_ressource').value = l.autres_ressource;
+  document.getElementById('telephone_responsable').value = l.telephone_responsable;
+  document.getElementById('adresse').value = l.adresse;
+  editIndex = index;
+}
+
+function supprimerLieu(index){
+  if(confirm("Supprimer ce lieu ?")){
+    lieux.splice(index,1);
+    sauvegarderLieux();
+    afficherLieux();
+  }
+}
+
+function resetForm(){
+  document.getElementById('nom_site').value = '';
+  document.getElementById('commune').value = '';
+  document.getElementById('surface').value = '';
+  document.getElementById('nb_accueil').value = '';
+  document.getElementById('nb_hebergement').value = '';
+  document.getElementById('nb_ravitaillement').value = '';
+  document.getElementById('autres_ressource').value = '';
+  document.getElementById('telephone_responsable').value = '';
+  document.getElementById('adresse').value = '';
+  editIndex = null;
+}
+
+function exporterJSON(){
+  const dataStr = JSON.stringify({lieux_accueil: lieux}, null, 2);
+  const blob = new Blob([dataStr], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = "accueil_lieu.json";
+  a.click();
+}
+
+function importerJSON(){
+  const fileInput = document.createElement('input');
+  fileInput.type = 'file';
+  fileInput.accept = '.json';
+  
+  fileInput.onchange = e => {
+    const file = e.target.files[0];
+    if(!file){ alert("Aucun fichier sélectionné"); return; }
+
+    const reader = new FileReader();
+    reader.onload = ev => {
+      try{
+        const json = JSON.parse(ev.target.result);
+        if(!Array.isArray(json.lieux_accueil)) throw "JSON invalide";
+        lieux = json.lieux_accueil;
+        sauvegarderLieux();
+        afficherLieux();
+        alert("Importation réussie !");
+      }catch(err){
+        alert("Erreur lecture JSON: " + err);
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  fileInput.click();
+}
+
+// Filtre
+function filtrerLieux() {
+  const filter = document.getElementById('filterInput').value.toLowerCase();
+  const tbody = document.getElementById('tableLieux').querySelector('tbody');
+  Array.from(tbody.rows).forEach(row => {
+    const nom = row.cells[0].textContent.toLowerCase();
+    const commune = row.cells[1].textContent.toLowerCase();
+    row.style.display = (nom.includes(filter) || commune.includes(filter)) ? '' : 'none';
+  });
+}
+
+// Tri
+function trierTable(n) {
+  const table = document.getElementById("tableLieux");
+  let switching = true;
+  let dir = "asc"; 
+  let switchcount = 0;
+
+  while (switching) {
+    switching = false;
+    const rows = table.rows;
+    for (let i = 1; i < rows.length - 1; i++) {
+      let shouldSwitch = false;
+      let x = rows[i].cells[n].textContent;
+      let y = rows[i + 1].cells[n].textContent;
+
+      if (!isNaN(parseFloat(x)) && !isNaN(parseFloat(y))) { 
+        x = parseFloat(x);
+        y = parseFloat(y);
+      }
+
+      if (dir === "asc" ? x > y : x < y) {
+        shouldSwitch = true;
+        break;
+      }
+    }
+    if (shouldSwitch) {
+      rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+      switching = true;
+      switchcount++;
+    } else if (switchcount === 0 && dir === "asc") {
+      dir = "desc";
+      switching = true;
+    }
+  }
+}
+
+// Initialisation
+chargerCommunes();
+chargerLieux();
+</script>
+
+</body>
+</html>

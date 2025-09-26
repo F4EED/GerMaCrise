@@ -6,7 +6,7 @@
   <style>
     body { margin:0; font-family:Arial,sans-serif; transition: background-color 0.3s, color 0.3s; }
     body.light { background-color:#ffffff; color:#000000; }
-    body.dark { background-color:#000000; color:#ffd700; }
+    body.dark { background-color:#000000; color:#ff8c00; }
 
     header { padding:10px; font-size:1.2em; font-weight:bold; }
     h2 { margin-top:0; }
@@ -21,28 +21,16 @@
     th, td { border:1px solid #999; padding:5px; text-align:left; }
     th { background-color:rgba(0,0,0,0.1); }
 
-    /* Adaptation thème */
-    body.dark table th { background-color:rgba(255,215,0,0.2); }
-    body.dark input, body.dark select { background-color:#333; color:#ffd700; border:1px solid #ffd700; }
-    body.dark button { background-color:#333; color:#ffd700; border:1px solid #ffd700; }
+    /* Adaptation thème sombre avec orange */
+    body.dark table th { background-color:rgba(255,140,0,0.2); }
+    body.dark input, body.dark select { background-color:#333; color:#ff8c00; border:1px solid #ff8c00; }
+    body.dark button { background-color:#333; color:#ff8c00; border:1px solid #ff8c00; }
 
     p.instruction { font-size:0.9em; color:gray; margin-top:5px; }
   </style>
 </head>
 <body class="light">
   <header>Gestion des utilisateurs - GerMaCrise</header>
-
-  <div class="form-section">
-    <h2>Ajouter / Modifier un utilisateur</h2>
-    <label>Nom <input type="text" id="nom"></label>
-    <label>Prénom <input type="text" id="prenom"></label>
-    <label>Email <input type="email" id="email"></label>
-    <label>Structures
-      <select id="structure" multiple size="5"></select>
-    </label>
-    <button onclick="ajouterUtilisateur()">Ajouter / Modifier</button>
-    <button onclick="resetForm()">Annuler</button>
-  </div>
 
   <div class="form-section">
     <h2>Liste des utilisateurs</h2>
@@ -57,7 +45,6 @@
     <button onclick="document.getElementById('importFile').click()">📤 Importer JSON</button>
     <button onclick="sauvegarderDansJson()">💾 Sauvegarder dans json/</button>
 
-    <!-- input file masqué -->
     <input type="file" id="importFile" accept="application/json" style="display:none" onchange="importerJSON(event)">
 
     <p class="instruction">
@@ -66,9 +53,33 @@
     </p>
   </div>
 
+  <div class="form-section">
+    <h2>Ajouter / Modifier un utilisateur</h2>
+    <label>Nom <input type="text" id="nom"></label>
+    <label>Prénom <input type="text" id="prenom"></label>
+    <label>Email <input type="email" id="email"></label>
+    <label>Structures
+      <select id="structure" multiple size="5"></select>
+    </label>
+    <button onclick="ajouterUtilisateur()">Ajouter / Modifier</button>
+    <button onclick="resetForm()">Annuler</button>
+  </div>
+
   <script>
+    function appliquerTheme(theme) {
+      document.body.className = theme;
+      localStorage.setItem("theme", theme);
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const theme = localStorage.getItem("theme") || "light";
+      appliquerTheme(theme);
+      chargerStructures();
+      chargerUtilisateurs();
+    });
+
     window.addEventListener('message', e => {
-      if(e.data.theme) document.body.className = e.data.theme;
+      if(e.data.theme) appliquerTheme(e.data.theme);
     });
 
     let utilisateurs = [];
@@ -107,7 +118,6 @@
         const resp = await fetch("json/utilisateurs.json");
         if(!resp.ok) throw new Error("Fichier JSON introuvable");
         utilisateurs = await resp.json();
-        console.log("Utilisateurs chargés depuis json/utilisateurs.json");
       } catch(e) {
         console.warn("Chargement depuis localStorage", e);
         const data = localStorage.getItem("utilisateurs");
@@ -194,7 +204,6 @@
       const dataStr = JSON.stringify(utilisateurs, null, 2);
       const blob = new Blob([dataStr], { type: "application/json" });
       const url = URL.createObjectURL(blob);
-
       const a = document.createElement("a");
       a.href = url;
       a.download = "utilisateurs.json";
@@ -230,10 +239,6 @@
       };
       reader.readAsText(file);
     }
-
-    // Initialisation
-    chargerStructures();
-    chargerUtilisateurs();
   </script>
 </body>
 </html>

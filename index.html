@@ -2,146 +2,167 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>GerMaCrise V0.2.5.3-Stable</title>
-<link rel="stylesheet" href="css/style.css">
+<title>GerMaCrise V0.4-Dev</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
-body {margin:0; font-family:Arial,sans-serif; transition: background-color 0.3s, color 0.3s;}
-body.light {background-color:#fff; color:#000;}
-body.dark {background-color:#000; color:#ffd700;}
-header {display:flex; justify-content:space-between; align-items:center; padding:10px 20px; transition: background-color 0.3s, color 0.3s;}
-body.light header {background-color:#fff; color:#000;}
-body.dark header {background-color:#000; color:#ffd700;}
-.header-left {display:flex; align-items:center;}
-.header-left img {height:50px; margin-right:10px; cursor:pointer;}
-.header-text h1 {margin:0; font-size:1.5em;}
-.header-text p {margin:0; font-size:0.9em;}
-#horloge {font-weight:bold; font-size:1.1em;}
-.theme-toggle {margin-left:20px; cursor:pointer; background:none; border:none; font-size:1.5em;}
-main {display:flex; height:calc(100vh - 80px);}
-nav {width:200px; padding:10px; display:flex; flex-direction:column; transition: background-color 0.3s;}
-body.light nav {background-color:#f0f0f0;}
-body.dark nav {background-color:#1a1a1a;}
-body.light nav button {color:#000;}
-body.dark nav button {color:#ffd700;}
-nav button {display:block; width:100%; margin-bottom:5px; padding:8px; background:none; border:none; text-align:left; cursor:pointer; font-size:1em; transition: color 0.3s, background-color 0.3s;}
-nav button:hover {background-color:rgba(0,0,0,0.1);}
-.submenu {max-height:none; overflow:hidden; padding-left:10px; display:block;}
-.arrow {float:right; transition:transform 0.3s;}
-.menu-parent.active>.arrow {transform:rotate(90deg);}
-#contenu {flex:1; border:none; width:100%; height:100%;}
-.version {margin-top:auto; font-size:0.8em; padding:10px; text-align:center; color:gray;}
-nav button.selected {font-weight: bold; background-color: rgba(0,0,0,0.15);}
+  /* Corps général */
+  body { font-family:Arial,sans-serif; margin:0; background:#fafafa; color:#000; transition: background 0.3s, color 0.3s; }
+  body.dark { background:#111; color:orange; }
+
+  /* Header */
+  header { padding:12px 24px; display:flex; justify-content:space-between; align-items:center; cursor:default; transition: background 0.3s, color 0.3s; }
+  header.light { background:#fafafa; color:#000; }
+  header.dark { background:#111; color:orange; } /* noir au lieu de gris */
+
+  .header-left { display:flex; align-items:center; }
+  .header-left img { height:40px; margin-right:12px; cursor:pointer; }
+
+  /* Main / Navigation / iframe */
+  main { display:flex; height:90vh; }
+  nav { width:250px; flex-shrink:0; padding:12px; display:flex; flex-direction:column; transition: background 0.3s, color 0.3s; }
+  nav.light { background:#fafafa; color:#000; }
+  nav.dark { background:#111; color:orange; } /* noir au lieu de gris */
+
+  nav ul { list-style:none; margin:0; padding:0; }
+  nav li { margin-bottom:4px; }
+  nav li button { width:100%; text-align:left; background:none; border:none; padding:10px; cursor:pointer; transition: background 0.3s, color 0.3s; color:inherit; }
+  nav li button.selected { font-weight:bold; background:#dde5ff; color:#000; }
+  nav.dark li button.selected { background:rgba(255,165,0,0.2); color:orange; }
+
+  nav li.open > ul { display:block; }
+  nav li ul { display:none; padding-left:15px; }
+  nav li ul li button { color:inherit; }
+
+  nav li button:hover { background:#cce; }
+  nav.dark li button:hover { background:rgba(255,165,0,0.2); }
+
+  iframe { border:none; flex:1; }
+
+  .version { margin-top:auto; text-align:center; font-size:0.9em; color:#888; }
+
+  .toggle-btn { cursor:pointer; font-size:1.2em; user-select:none; }
 </style>
 </head>
-<body class="light">
-
-<header>
+<body>
+<header id="header">
   <div class="header-left">
-    <img id="logo" src="images/Logo_F4EED.png" alt="Logo GerMaCrise">
-    <div class="header-text">
-      <h1>GerMaCrise V0.2.5.3-Stable</h1>
-      <p id="sous-titre">GerMaCrise est un POC, destinée à aider à la gestion de crise en mode offline.</p>
+    <img src="images/logo_gmc.jpg" alt="Logo" onclick="chargerPage('apropos.html', null)">
+    <div>
+      <h1 style="margin:0; font-size:1.4em;">GerMaCrise V0.4-Dev</h1>
+      <div style="font-size:0.95em;">POC pour la gestion de crise (offline)</div>
     </div>
   </div>
-  <div class="header-right">
-    <span id="horloge"></span>
-    <button class="theme-toggle" id="toggleTheme" title="Basculer le thème">🌞</button>
+  <div>
+    <span class="toggle-btn" id="themeToggle">🌞</span>
+    <div id="horloge" style="margin-top:4px; font-size:0.9em;"></div>
   </div>
 </header>
 
 <main>
-  <nav>
-    <!-- GereMaCrise -->
-    <button class="menu-parent active" onclick="toggleSousMenu(this)">GereMaCrise <span class="arrow">▸</span></button>
-    <div class="submenu" style="display:block;">
-      <button onclick="chargerPage('cartoff.html', this)">Cartographie (offline)</button>
-      <button onclick="window.open('https://map.gaulix.fr/','_blank')">Map Gaulix (online)</button>
-      <button onclick="window.open('http://terrain.local/','_blank')">Map Gaulix (offline)</button>
-      <button onclick="chargerPage('accueil_lieu.html', this)">Lieux d'accueil</button>
-      <button onclick="chargerPage('annuaire_crise.html', this)">Annuaire de crise</button>
-      <button onclick="chargerPage('liste_site_industriel.html', this)">Annuaire sites industriels</button>
-    </div>
-
-    <!-- Activation -->
-    <button class="menu-parent active" onclick="toggleSousMenu(this)">Activation <span class="arrow">▸</span></button>
-    <div class="submenu" style="display:block;">
-      <button onclick="chargerPage('activation_creation.html', this)">Création</button>
-      <button onclick="chargerPage('activation_suivi.html', this)">Suivi</button>
-    </div>
-
-    <!-- Paramétrage -->
-    <button class="menu-parent active" onclick="toggleSousMenu(this)">Paramétrage <span class="arrow">▸</span></button>
-    <div class="submenu" style="display:block;">
-      <button id="btn-options" style="display:none;" onclick="chargerPage('options.html', this)">Options</button>
-      <button onclick="chargerPage('utilisateurs.html', this)">Utilisateurs</button>
-      <button onclick="chargerPage('structure.html', this)">Structures</button>
-    </div>
-
-    <!-- À propos -->
-    <button id="btn-apropos" class="selected" onclick="chargerPage('apropos.html', this)">À propos</button>
-
-    <!-- Version -->
-    <div class="version">V0.2.5.3-Stable</div>
+  <nav id="sidebar">
+    <ul>
+      <li>
+        <button onclick="toggleSubmenu(this)">Cartographie</button>
+        <ul>
+          <li><button onclick="chargerPage('cartoff.html', this)">Cartographie (offline)</button></li>
+          <li><button onclick="chargerPage('https://map.gaulix.fr', this)">Map Gaulix (online)</button></li>
+          <li><button onclick="chargerPage('http://local.terrain', this)">Map Gaulix (offline)</button></li>
+        </ul>
+      </li>
+      <li><button onclick="chargerPage('activation_creation.html', this)">Activation(s)</button></li>
+      <li>
+        <button onclick="toggleSubmenu(this)">Annuaire(s)</button>
+        <ul>
+          <li><button onclick="chargerPage('annuaire_crise.html', this)">Annuaire de crise</button></li>
+          <li><button onclick="chargerPage('liste_site_industriel.html', this)">Liste sites industriels</button></li>
+        </ul>
+      </li>
+      <li>
+        <button onclick="toggleSubmenu(this)">Plan Communal de Sauvegarde</button>
+        <ul>
+          <li><button onclick="chargerPage('accueil_lieu.html', this)">Accueil lieu</button></li>
+          <li><button onclick="chargerPage('gestion_documents.html', this)">Gestion documents</button></li>
+        </ul>
+      </li>
+      <li>
+        <button onclick="toggleSubmenu(this)">Paramétrage(s)</button>
+        <ul>
+          <li><button onclick="chargerPage('utilisateurs.html', this)">Utilisateurs</button></li>
+          <li><button onclick="chargerPage('Structure.html', this)">Structures</button></li>
+        </ul>
+      </li>
+      <li><button onclick="chargerPage('apropos.html', this)">À propos</button></li>
+      <li class="version">V0.4-Dev</li>
+    </ul>
   </nav>
 
   <iframe id="contenu" src="apropos.html"></iframe>
 </main>
 
 <script>
-// Horloge
+let currentTheme = localStorage.getItem('theme') || 'light';
+const body = document.body;
+const header = document.getElementById('header');
+const sidebar = document.getElementById('sidebar');
+const toggle = document.getElementById('themeToggle');
+
+function appliquerTheme(theme){
+  currentTheme = theme;
+  localStorage.setItem('theme', theme);
+
+  if(theme === 'dark'){
+    body.className = 'dark';
+    header.className = 'dark';
+    sidebar.className = 'dark';
+    toggle.textContent = '🌙';
+  } else {
+    body.className = '';
+    header.className = 'light';
+    sidebar.className = 'light';
+    toggle.textContent = '🌞';
+  }
+
+  // envoyer le thème à l'iframe
+  const iframe = document.getElementById('contenu');
+  if(iframe?.contentWindow){
+    iframe.contentWindow.postMessage({type:'theme', theme:currentTheme}, '*');
+  }
+}
+
+toggle.onclick = () => appliquerTheme(currentTheme==='light'?'dark':'light');
+
+function toggleSubmenu(btn){
+  const li = btn.parentElement;
+  li.classList.toggle('open');
+}
+
+function chargerPage(url, btn){
+  document.getElementById('contenu').src = url;
+  document.querySelectorAll('nav button').forEach(b=>b.classList.remove('selected'));
+  if(btn) btn.classList.add('selected');
+}
+
 function majHorloge(){
   const now = new Date();
-  const options = { weekday:'long', year:'numeric', month:'long', day:'numeric' };
-  const dateStr = now.toLocaleDateString('fr-FR', options);
-  const heureStr = now.toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
-  const horloge = document.getElementById("horloge");
-  horloge.textContent = dateStr + " - " + heureStr;
-  horloge.style.color = document.body.classList.contains("dark") ? "#ffd700" : "#000";
+  document.getElementById('horloge').textContent =
+    now.toLocaleDateString('fr-FR', { weekday:"long", year:"numeric", month:"long", day:"numeric" }) + ' ' +
+    now.toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
 }
 majHorloge();
 setInterval(majHorloge, 60000);
 
-// Toggle sous-menus
-function toggleSousMenu(btn){
-  btn.classList.toggle('active');
-  const submenu=btn.nextElementSibling;
-  if(submenu){
-    submenu.style.display=(submenu.style.display==='block')?'none':'block';
+if(!localStorage.getItem('popupShown')){
+  alert("ATTENTION : ceci est seulement un POC, un démonstrateur de ce qu'on peut attendre d'un outil d'aide à la gestion de crise. Vous l'utilisez sans aucune garantie.");
+  localStorage.setItem('popupShown','true');
+}
+
+document.addEventListener('DOMContentLoaded', ()=>appliquerTheme(currentTheme));
+
+window.addEventListener('message', e=>{
+  if(e.data?.type==='requestTheme'){
+    e.source.postMessage({type:'theme', theme:currentTheme}, '*');
   }
-}
-
-// Iframe + gestion bouton sélectionné
-function chargerPage(page, btn){
-  document.getElementById('contenu').src=page;
-  document.querySelectorAll("nav button").forEach(b=>b.classList.remove("selected"));
-  if(btn) btn.classList.add("selected");
-}
-
-// Cliquer sur le logo => revenir à "À propos"
-document.getElementById("logo").addEventListener("click", () => {
-  document.getElementById("contenu").src = "apropos.html";
-  document.querySelectorAll("nav button").forEach(b => b.classList.remove("selected"));
-  document.getElementById("btn-apropos").classList.add("selected");
 });
-
-// Thème
-const themeToggleBtn=document.getElementById("toggleTheme");
-function appliquerTheme(theme){
-  document.body.className=theme;
-  themeToggleBtn.textContent=theme==='light'?"🌞":"🌙";
-  localStorage.setItem("theme",theme);
-  document.getElementById("sous-titre").style.color=theme==='light'?"#000":"#ffd700";
-  const iframe=document.getElementById("contenu");
-  if(iframe.contentWindow) iframe.contentWindow.postMessage({theme}, "*");
-  // Mettre à jour la couleur horloge à la bascule
-  majHorloge();
-}
-themeToggleBtn.addEventListener("click",()=>{
-  const newTheme=document.body.classList.contains("light")?"dark":"light";
-  appliquerTheme(newTheme);
-});
-appliquerTheme(localStorage.getItem("theme")||"light");
 </script>
-
 </body>
 </html>

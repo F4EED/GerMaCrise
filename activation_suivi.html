@@ -1,261 +1,166 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <title>Suivi des activations - GerMaCrise</title>
-  <style>
-    body { margin:0; font-family:Arial,sans-serif; transition: background-color 0.3s, color 0.3s; }
-    body.light { background-color:#ffffff; color:#000000; }
-    body.dark { background-color:#000000; color:#ffd700; }
+<meta charset="UTF-8">
+<title>Suivi des activations - GerMaCrise</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  body { margin:0; font-family:Arial,sans-serif; transition: background 0.3s, color 0.3s; }
+  body.light { background:#fff; color:#000; }
+  body.dark { background:#000; color:#ffd700; }
 
-    header { padding:10px; font-size:1.2em; font-weight:bold; }
-    h2 { margin-top:0; }
+  header { padding:10px; font-size:1.2em; font-weight:bold; }
+  h2 { margin-top:0; }
 
-    .form-section { margin:15px; }
-    label { display:block; margin-top:10px; }
-    input, select, textarea { width:100%; padding:5px; margin-top:3px; }
-    select[multiple] { height:100px; }
-    button { margin-top:10px; padding:5px 10px; cursor:pointer; }
+  .form-section { margin:15px; }
+  label { display:block; margin-top:10px; }
+  input, select, textarea, button { width:100%; padding:5px; margin-top:3px; transition: background 0.3s, color 0.3s, border 0.3s; }
 
-    table { width:100%; border-collapse:collapse; margin-top:20px; }
-    th, td { border:1px solid #999; padding:5px; text-align:left; }
-    th { background-color:rgba(0,0,0,0.1); }
+  table { width:100%; border-collapse:collapse; margin-top:20px; }
+  th, td { border:1px solid #999; padding:5px; text-align:left; }
+  th { background-color:rgba(0,0,0,0.1); }
 
-    /* Thème sombre */
-    body.dark table th { background-color:rgba(255,215,0,0.2); }
-    body.dark input, body.dark select, body.dark textarea, body.dark button { background-color:#333; color:#ffd700; border:1px solid #ffd700; }
-  </style>
+  body.dark table th { background-color:rgba(255,215,0,0.2); }
+  body.dark input, body.dark select, body.dark textarea, body.dark button { background:#333; color:#ffd700; border:1px solid #ffd700; }
+</style>
 </head>
 <body class="light">
-  <header>Suivi des activations - GerMaCrise</header>
 
-  <div class="form-section">
-    <h2>Modifier une activation</h2>
+<header>Suivi des activations - GerMaCrise</header>
 
-    <label>ID <input type="text" id="idActivation" readonly></label>
-    <label>Titre <input type="text" id="titre"></label>
-    <label>Type <input type="text" id="type"></label>
-    <label>Date de création <input type="datetime-local" id="date_creation" readonly></label>
-    <label>Date de clôture <input type="datetime-local" id="date_cloture"></label>
-    <label>Status 
-      <select id="status">
-        <option value="planifiée">Planifiée</option>
-        <option value="en cours">En cours</option>
-        <option value="clôturée">Clôturée</option>
-      </select>
-    </label>
-    <label>Responsable <input type="text" id="responsable"></label>
-    <label>Rédacteur <input type="text" id="redacteur"></label>
+<div class="form-section">
+  <h2>Liste des activations</h2>
+  <table id="tableActivations">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Nom</th>
+        <th>Date</th>
+        <th>Responsable</th>
+        <th>Status</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+  <button onclick="exporterJSON()">📥 Exporter en JSON</button>
+</div>
 
-    <label>Structures impliquées
-      <select id="structure_implique" multiple></select>
-    </label>
+<div class="form-section">
+  <h2>Ajouter / Modifier une activation</h2>
+  <label>ID <input type="text" id="idAct" readonly></label>
+  <label>Nom <input type="text" id="nomAct"></label>
+  <label>Date <input type="date" id="dateAct"></label>
+  <label>Responsable <input type="text" id="responsableAct"></label>
+  <label>Status 
+    <select id="statusAct">
+      <option value="en_cours">En cours</option>
+      <option value="terminee">Terminée</option>
+      <option value="annulee">Annulée</option>
+    </select>
+  </label>
+  <button onclick="sauvegarderActivation()">Enregistrer</button>
+  <button onclick="resetForm()">Annuler</button>
+</div>
 
-    <label>Commune
-      <select id="commune"></select>
-    </label>
+<script>
+  // === Thème : appliquer immédiatement depuis le parent ===
+  function appliquerTheme(theme){
+    document.body.className = theme==='dark' ? 'dark' : 'light';
+  }
 
-    <label>Secteur <input type="text" id="secteur"></label>
-    <label>Description
-      <textarea id="description_creation_activation"></textarea>
-    </label>
+  // Écouter le thème envoyé par le parent
+  window.addEventListener('message', e=>{
+    if(e.data?.type==='theme' && e.data.theme){
+      appliquerTheme(e.data.theme);
+    }
+  });
 
-    <button onclick="sauvegarderActivation()">Enregistrer</button>
-    <button onclick="resetForm()">Annuler</button>
-  </div>
+  // === Gestion des activations ===
+  let activations = [];
+  let editIndex = null;
 
-  <div class="form-section">
-    <h2>Liste des activations</h2>
-    <table id="tableActivations">
-      <thead>
-        <tr>
-          <th>ID</th><th>Titre</th><th>Status</th><th>Date création</th><th>Commune</th><th>Actions</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-    <button onclick="exporterJSON()">📥 Exporter en JSON</button>
-  </div>
-
-  <script>
-    window.addEventListener('message', e => {
-      if(e.data.theme) document.body.className = e.data.theme;
+  function afficherActivations(){
+    const tbody = document.querySelector('#tableActivations tbody');
+    tbody.innerHTML = '';
+    activations.forEach((a,index)=>{
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${a.id}</td>
+        <td>${a.nom}</td>
+        <td>${a.date}</td>
+        <td>${a.responsable}</td>
+        <td>${a.status}</td>
+        <td>
+          <button onclick="modifierActivation(${index})">✏</button>
+          <button onclick="supprimerActivation(${index})">🗑</button>
+        </td>`;
+      tbody.appendChild(tr);
     });
+  }
 
-    let activations = [];
-    let structures = [];
-    let communes = [];
-    let editIndex = null;
+  function resetForm(){
+    ['idAct','nomAct','dateAct','responsableAct','statusAct'].forEach(id => document.getElementById(id).value='');
+    editIndex = null;
+  }
 
-    // Charger structures depuis structure.json
-    async function chargerStructures() {
-      try {
-        const resp = await fetch("json/structure.json");
-        if(!resp.ok) throw new Error("Fichier JSON introuvable");
-        structures = await resp.json();
-      } catch(e) {
-        console.warn("Impossible de charger structures", e);
-        structures = [];
-      }
+  function modifierActivation(index){
+    const a = activations[index];
+    document.getElementById('idAct').value = a.id;
+    document.getElementById('nomAct').value = a.nom;
+    document.getElementById('dateAct').value = a.date;
+    document.getElementById('responsableAct').value = a.responsable;
+    document.getElementById('statusAct').value = a.status;
+    editIndex = index;
+  }
+
+  function sauvegarderActivation(){
+    const id = editIndex!==null ? activations[editIndex].id : 'act_'+Date.now();
+    const act = {
+      id,
+      nom: document.getElementById('nomAct').value.trim(),
+      date: document.getElementById('dateAct').value,
+      responsable: document.getElementById('responsableAct').value.trim(),
+      status: document.getElementById('statusAct').value
+    };
+    if(editIndex!==null){
+      activations[editIndex] = act;
+    } else {
+      activations.push(act);
     }
+    afficherActivations();
+    resetForm();
+  }
 
-    function afficherStructuresDansForm(selected=[]) {
-      const select = document.getElementById('structure_implique');
-      select.innerHTML = '';
-      structures.forEach(s => {
-        const opt = document.createElement('option');
-        opt.value = s.nom;
-        opt.textContent = s.nom;
-        if(selected.includes(s.nom)) opt.selected = true;
-        select.appendChild(opt);
-      });
-    }
-
-    // Charger communes depuis geojson
-    async function chargerCommunes() {
-      try {
-        const resp = await fetch("geojson/D42/communes-42-loire.geojson");
-        if(!resp.ok) throw new Error("GeoJSON introuvable");
-        const data = await resp.json();
-        communes = data.features.map(f => f.properties.nom || f.properties.NOM || "Inconnu");
-      } catch(e) {
-        console.warn("Impossible de charger les communes", e);
-        communes = [];
-      }
-    }
-
-    function afficherCommunesDansForm(selected="") {
-      const select = document.getElementById('commune');
-      select.innerHTML = '<option value="">-- Sélectionner une commune --</option>';
-      communes.sort().forEach(c => {
-        const opt = document.createElement('option');
-        opt.value = c;
-        opt.textContent = c;
-        if(c === selected) opt.selected = true;
-        select.appendChild(opt);
-      });
-    }
-
-    // Charger activations
-    async function chargerActivations() {
-      try {
-        const resp = await fetch("json/activations.json");
-        if(!resp.ok) throw new Error("Fichier JSON introuvable");
-        activations = await resp.json();
-      } catch(e) {
-        const data = localStorage.getItem("activations");
-        activations = data ? JSON.parse(data) : [];
-      }
+  function supprimerActivation(index){
+    if(confirm("Supprimer cette activation ?")){
+      activations.splice(index,1);
       afficherActivations();
     }
+  }
 
-    function sauvegarderActivations() {
-      localStorage.setItem("activations", JSON.stringify(activations));
-    }
+  function exporterJSON(){
+    const dataStr = JSON.stringify(activations,null,2);
+    const blob = new Blob([dataStr], {type:"application/json"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = "activations.json";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
 
-    function afficherActivations() {
-      const tbody = document.getElementById('tableActivations').querySelector('tbody');
-      tbody.innerHTML = '';
-      activations.forEach((a, index) => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${a.id}</td>
-          <td>${a.titre}</td>
-          <td>${a.status}</td>
-          <td>${a.date_creation}</td>
-          <td>${a.commune || ""}</td>
-          <td>
-            <button onclick="modifierActivation(${index})">✏</button>
-            <button onclick="supprimerActivation(${index})">🗑</button>
-          </td>`;
-        tbody.appendChild(tr);
-      });
-    }
-
-    function modifierActivation(index) {
-      const a = activations[index];
-      document.getElementById('idActivation').value = a.id;
-      document.getElementById('titre').value = a.titre;
-      document.getElementById('type').value = a.type;
-      document.getElementById('date_creation').value = a.date_creation;
-      document.getElementById('date_cloture').value = a.date_cloture;
-      document.getElementById('status').value = a.status;
-      document.getElementById('responsable').value = a.responsable;
-      document.getElementById('redacteur').value = a.redacteur;
-      document.getElementById('secteur').value = a.secteur;
-      document.getElementById('description_creation_activation').value = a.description_creation_activation;
-      afficherStructuresDansForm(a.structure_implique);
-      afficherCommunesDansForm(a.commune);
-      editIndex = index;
-    }
-
-    function sauvegarderActivation() {
-      if(editIndex === null) return;
-      const id = document.getElementById('idActivation').value;
-      const titre = document.getElementById('titre').value.trim();
-      const type = document.getElementById('type').value.trim();
-      const date_creation = document.getElementById('date_creation').value;
-      const date_cloture = document.getElementById('date_cloture').value;
-      const status = document.getElementById('status').value;
-      const responsable = document.getElementById('responsable').value.trim();
-      const redacteur = document.getElementById('redacteur').value.trim();
-      const structure_implique = Array.from(document.getElementById('structure_implique').selectedOptions).map(o => o.value);
-      const commune = document.getElementById('commune').value;
-      const secteur = document.getElementById('secteur').value.trim();
-      const description = document.getElementById('description_creation_activation').value.trim();
-
-      activations[editIndex] = { id, titre, type, date_creation, date_cloture, status, responsable, redacteur, structure_implique, commune, secteur, description_creation_activation: description };
-
-      sauvegarderActivations();
-      afficherActivations();
-      resetForm();
-    }
-
-    function supprimerActivation(index) {
-      if(confirm("Supprimer cette activation ?")) {
-        activations.splice(index,1);
-        sauvegarderActivations();
-        afficherActivations();
-      }
-    }
-
-    function resetForm() {
-      document.getElementById('idActivation').value = '';
-      document.getElementById('titre').value = '';
-      document.getElementById('type').value = '';
-      document.getElementById('date_creation').value = '';
-      document.getElementById('date_cloture').value = '';
-      document.getElementById('status').value = 'planifiée';
-      document.getElementById('responsable').value = '';
-      document.getElementById('redacteur').value = '';
-      document.getElementById('secteur').value = '';
-      document.getElementById('description_creation_activation').value = '';
-      afficherStructuresDansForm();
-      afficherCommunesDansForm();
-      editIndex = null;
-    }
-
-    function exporterJSON() {
-      const dataStr = JSON.stringify(activations, null, 2);
-      const blob = new Blob([dataStr], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "activations.json";
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    }
-
-    // Initialisation
-    (async () => {
-      await chargerStructures();
-      await chargerCommunes();
-      await chargerActivations();
-      resetForm();
-    })();
-  </script>
+  // Initialisation avec quelques données de test
+  window.addEventListener('DOMContentLoaded', ()=>{
+    activations = [
+      {id:'1', nom:'Activation A', date:'2025-09-25', responsable:'Jean', status:'en_cours'},
+      {id:'2', nom:'Activation B', date:'2025-09-26', responsable:'Marie', status:'terminee'}
+    ];
+    afficherActivations();
+    resetForm();
+  });
+</script>
 </body>
 </html>

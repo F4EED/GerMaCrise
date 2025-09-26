@@ -1,0 +1,45 @@
+{
+  "documents": [
+    {
+      "id": "doc_1758733067614",
+      "nom": "Guide RETEX DGSCGC",
+      "type": "pdf",
+      "date": "2025-09-24",
+      "description": "guide de gestion des RETEX",
+      "file": "doc/MEMENTO_RETEX_DGSCGC.pdf",
+      "keywords": [
+        "retex",
+        "guide",
+        "DGSCGC"
+      ]
+    },
+    {
+      "id": "doc_1758737926022",
+      "nom": "Guide pratique d'élaboration - plan communal de sauvegarde",
+      "type": "pdf",
+      "date": "2024-03-01",
+      "description": "guide pratique d'élaboration des PCS",
+      "keywords": [
+        "guide",
+        "pratique",
+        "PCS",
+        "DGSCGC"
+      ],
+      "file": "Guide_PCS.pdf"
+    },
+    {
+      "id": "doc_1758738129390",
+      "nom": "Plans communaux  et intercommunaux  de sauvegarde- Guide pratique  d’élaboration et de suivi",
+      "type": "pdf",
+      "date": "2024-03-01",
+      "description": "Direction générale\n de la Sécurité civile\n et de la gestion des crises\nAMF",
+      "keywords": [
+        "guide",
+        "pcs",
+        "DGSCGS",
+        "plan communal de sauvegarde"
+      ],
+      "file": "Guide Plans de sauvegarde Nov 2024.pdf"
+    }
+  ]
+}

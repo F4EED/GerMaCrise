@@ -4,9 +4,19 @@
   <meta charset="UTF-8">
   <title>Structures - GerMaCrise</title>
   <style>
-    body { margin:0; font-family:Arial,sans-serif; transition: background-color 0.3s, color 0.3s; }
-    body.light { background-color:#ffffff; color:#000000; }
-    body.dark { background-color:#000000; color:#ffd700; }
+    body {
+      margin:0;
+      font-family:Arial,sans-serif;
+      transition: background-color 0.3s, color 0.3s;
+    }
+    body.light {
+      background-color:#ffffff;
+      color:#000000;
+    }
+    body.dark {
+      background-color:#000000;
+      color:#ff8800; /* orange harmonisé */
+    }
 
     header { padding:10px; font-size:1.2em; font-weight:bold; }
     h2 { margin-top:0; }
@@ -20,23 +30,22 @@
     th, td { border:1px solid #999; padding:5px; text-align:left; }
     th { background-color:rgba(0,0,0,0.1); }
 
-    /* Adaptation thème */
-    body.dark table th { background-color:rgba(255,215,0,0.2); }
-    body.dark input, body.dark button { background-color:#333; color:#ffd700; border:1px solid #ffd700; }
+    /* Thème sombre */
+    body.dark table th { background-color:rgba(255,136,0,0.2); }
+    body.dark input, body.dark button {
+      background-color:#222;
+      color:#ff8800;
+      border:1px solid #ff8800;
+    }
 
     p.instruction { font-size:0.9em; color:gray; margin-top:5px; }
+    body.dark p.instruction { color:#ff8800; }
   </style>
 </head>
 <body class="light">
   <header>Gestion des structures - GerMaCrise</header>
 
-  <div class="form-section">
-    <h2>Ajouter / Modifier une structure</h2>
-    <label>Nom <input type="text" id="nomStructure"></label>
-    <button onclick="ajouterStructure()">Ajouter / Modifier</button>
-    <button onclick="resetForm()">Annuler</button>
-  </div>
-
+  <!-- Liste -->
   <div class="form-section">
     <h2>Liste des structures</h2>
     <table id="tableStructures">
@@ -51,24 +60,38 @@
     </p>
   </div>
 
+  <!-- Formulaire -->
+  <div class="form-section">
+    <h2>Ajouter / Modifier une structure</h2>
+    <label>Nom <input type="text" id="nomStructure"></label>
+    <button onclick="ajouterStructure()">Ajouter / Modifier</button>
+    <button onclick="resetForm()">Annuler</button>
+  </div>
+
   <script>
-    // Adaptation thème clair/sombre depuis parent
+    // === Appliquer le thème stocké au premier chargement
+    document.addEventListener('DOMContentLoaded', ()=>{
+      const theme = localStorage.getItem('theme') || 'light';
+      document.body.className = theme;
+    });
+
+    // === Réception du thème depuis le parent (index.html)
     window.addEventListener('message', e => {
-      if(e.data.theme) document.body.className = e.data.theme;
+      if(e.data.theme){
+        document.body.className = e.data.theme;
+        localStorage.setItem('theme', e.data.theme);
+      }
     });
 
     let structures = [];
     let editIndex = null;
 
-    // Charger structures depuis json/structure.json, sinon localStorage
     async function chargerStructures() {
       try {
         const resp = await fetch("json/structure.json");
         if(!resp.ok) throw new Error("Fichier JSON introuvable");
         structures = await resp.json();
-        console.log("Structures chargées depuis json/structure.json");
       } catch(e) {
-        console.warn("Chargement depuis localStorage", e);
         const data = localStorage.getItem("structures");
         structures = data ? JSON.parse(data) : [];
       }

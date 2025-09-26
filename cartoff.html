@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>cartoff - V1.5-plan</title>
+<title>cartoff - V1.6-dev</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <link rel="stylesheet" href="css/leaflet.css" />
 <style>
@@ -12,7 +12,7 @@ html, body { margin:0; height:100%; }
 .sidebar { 
   position:absolute; top:10px; right:10px; z-index:2000; 
   background:white; padding:10px; border-radius:8px; 
-  box-shadow:0 2px 6px rgba(0,0,0,0.3); max-width:320px; 
+  box-shadow:0 2px 6px rgba(0,0,0,0.3); max-width:360px; 
   font-family:Arial,sans-serif; font-size:14px; 
   user-select:none; transition: background 0.3s, color 0.3s;
 }
@@ -34,7 +34,6 @@ label { cursor:pointer; display:block; margin-bottom:6px; }
 #errorMessages { color:red; font-size:12px; margin-top:8px; }
 
 #sidebarLogo { display:block; margin:10px auto 0 auto; max-width:160px; }
-
 #versionFloating{
   position:absolute; bottom:10px; left:50%; transform:translateX(-50%);
   z-index:4000; background: rgba(0,0,0,0.7); color:white; 
@@ -63,14 +62,22 @@ body.dark #coords { background: rgba(50,50,50,0.85); color:white; }
 
 #aboutBtn { display:block; margin:10px 0; padding:6px 10px; cursor:pointer; background:#eee; border:none; border-radius:4px; }
 #aboutBtn.dark { background:#555; color:white; }
+
+#mqttLed {
+  display:inline-block; width:12px; height:12px; border-radius:50%; margin-left:6px; vertical-align:middle;
+  background:red; border:1px solid #555;
+}
 </style>
 </head>
 <body>
 
 <div class="sidebar" id="layerMenu">
   <div class="sidebar-header" id="dragHandle">Calques GeoJSON (déplacer ici)</div>
-  <button id="toggleDark">Basculer clair/sombre</button>
-  <button id="aboutBtn">À propos</button>
+
+  <details open>
+    <summary>Positions Meshtastic</summary>
+    <label><input type="checkbox" id="showMeshtastic"> Afficher positions Meshtastic <span id="mqttLed"></span></label>
+  </details>
 
   <details open>
     <summary>Département de la Loire</summary>
@@ -105,23 +112,34 @@ body.dark #coords { background: rgba(50,50,50,0.85); color:white; }
 <div id="coords">Déplacez la souris sur la carte...</div>
 <div id="versionFloating" title="Déplacez pour mémoriser la position"></div>
 
-<!-- Modale "À propos" -->
 <div id="aboutModal" class="modal">
   <div class="modal-content" id="aboutContentContainer">
     <span class="modal-close">&times;</span>
     <img src="images/Logo_F4EED.png" alt="Logo D42" style="display:block; margin:10px auto; max-width:120px;">
     <h2 style="text-align:center;">À propos</h2>
-    <div id="aboutContent">
-      <!-- Changelog sera injecté ici -->
-    </div>
+    <div id="aboutContent"></div>
   </div>
 </div>
 
 <script src="js/leaflet.js"></script>
 <script src="js/protomaps-leaflet.js"></script>
 <script src="js/proj4.js"></script>
+<script src="js/mqtt.min.js"></script> 
 
 <script>
+// === Thème automatique et suivi en temps réel
+function applyTheme(theme){
+    if(theme==='dark'){ 
+        document.body.classList.add('dark'); 
+        document.querySelector('.sidebar').classList.add('dark');
+    } else {
+        document.body.classList.remove('dark'); 
+        document.querySelector('.sidebar').classList.remove('dark');
+    }
+}
+applyTheme(localStorage.getItem('theme') || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'));
+window.addEventListener('storage', (e)=>{ if(e.key==='theme'){ applyTheme(e.newValue); } });
+
 // === Carte
 const map = L.map('map').setView([45.7885,4.1830],9);
 protomapsL.leafletLayer({url:"pmtiles/mymap.pmtiles",flavor:'light',lang:'fr'}).addTo(map);
@@ -164,11 +182,11 @@ const geojsonFiles={
     {name:"Communes de La Loire", file:"geojson/D42/communes-42-loire.geojson", style:{color:"#A0522D", weight:2, dashArray:"4 4", fill:false}, isCommuneList:true},
     {name:"Habitation", file:"geojson/D42/Zone_habitation.geojson", style:{color:"darkred", weight:3}, noAutoZoom:true},
     {name:"Lieu dit :: non habitable", file:"geojson/D42/Lieu_dit_non_habite.geojson", style:{color:"darkred", weight:3}, minZoom:16, noAutoZoom:true},
-    {name:"Lieu dit :: habitable", file:"geojson/D42/Toponyme.geojson", style:{color:"darkred", weight:3}, minZoom:16, noAutoZoom:true}
+    {name:"Lieu dit :: habitable", file:"geojson/D42/Toponyme.geojson", style:{color:"darkred", weight:3}, minZoom:16, noAutoZoom:true},
+    {name:"Entreprises SEVESO", file:"geojson/D42/Ets_SEVESO.geojson", style:{color:"darkred", weight:3}, minZoom:14, noAutoZoom:true}
   ],
   risks:[
-    {name:"Centre d'Icendie et Secours", file:"geojson/D42/CIS.geojson", style:{color:"red", weight:2, dashArray:'4 4'}, noAutoZoom:true},
-    {name:"Entreprises SEVESO", file:"geojson/D42/Ets_SEVESO.geojson", style:{color:"darkred", weight:3}, noAutoZoom:true}
+    {name:"Centre d'Icendie et Secours", file:"geojson/D42/CIS.geojson", style:{color:"red", weight:2, dashArray:'4 4'}, noAutoZoom:true}
   ],
   AASC:[
     {name:"PIO UDIOM(42)", file:"geojson/D42/UDIOM42.geojson", style:{color:"red", weight:2, dashArray:'4 4'}}
@@ -210,9 +228,9 @@ async function loadGeoJSONLayer(item){
         }
         if(item.isCommuneList){
           const index=item.name==="Communes de La Loire"? communesLoireIndex:communesCorseIndex;
-          index[feature.properties.code]=feature;
+          index[feature.properties.nom] = feature; // clé par nom
           const select=document.getElementById(item.name==="Communes de La Loire"?"communeSelect":"communeCorseSelect");
-          const opt=document.createElement("option"); opt.value=feature.properties.code; opt.textContent=feature.properties.nom; select.appendChild(opt);
+          const opt=document.createElement("option"); opt.value=feature.properties.nom; opt.textContent=feature.properties.nom; select.appendChild(opt);
           l.on('mouseover',()=> currentToponyme=feature.properties.nom);
           l.on('mouseout',()=> currentToponyme=null);
         }
@@ -234,20 +252,31 @@ async function setupLayers(){
   }
 
   document.getElementById("communeSelect").addEventListener("change", e=>{
-    const code=e.target.value; if(!code||!communesLoireIndex[code]) return;
+    const nom=e.target.value; if(!nom||!communesLoireIndex[nom]) return;
     if(highlightLayer) map.removeLayer(highlightLayer);
-    highlightLayer=L.geoJSON(communesLoireIndex[code],{style:{color:"blue",weight:3,fillOpacity:0.3}}).addTo(map);
+    highlightLayer=L.geoJSON(communesLoireIndex[nom],{style:{color:"blue",weight:3,fillOpacity:0.3}}).addTo(map);
     map.fitBounds(highlightLayer.getBounds(),{padding:[20,20]});
     setTimeout(()=>{ map.removeLayer(highlightLayer); highlightLayer=null; },8000);
   });
   document.getElementById("communeCorseSelect").addEventListener("change", e=>{
-    const code=e.target.value; if(!code||!communesCorseIndex[code]) return;
+    const nom=e.target.value; if(!nom||!communesCorseIndex[nom]) return;
     if(highlightCorseLayer) map.removeLayer(highlightCorseLayer);
-    highlightCorseLayer=L.geoJSON(communesCorseIndex[code],{style:{color:"blue",weight:3,fillOpacity:0.3}}).addTo(map);
+    highlightCorseLayer=L.geoJSON(communesCorseIndex[nom],{style:{color:"blue",weight:3,fillOpacity:0.3}}).addTo(map);
     map.fitBounds(highlightCorseLayer.getBounds(),{padding:[20,20]});
     setTimeout(()=>{ map.removeLayer(highlightCorseLayer); highlightCorseLayer=null; },8000);
   });
+
+  // URL ?commune=
+  const params = new URLSearchParams(window.location.search);
+  const communeSelectionnee = params.get("commune");
+  if(communeSelectionnee && communesLoireIndex[communeSelectionnee]){
+      const feature = communesLoireIndex[communeSelectionnee];
+      const hl = L.geoJSON(feature, {style:{color:"blue",weight:3,fillOpacity:0.3}}).addTo(map);
+      map.fitBounds(hl.getBounds(), {padding:[20,20]});
+      setTimeout(()=>{ map.removeLayer(hl); }, 8000);
+  }
 }
+
 setupLayers();
 
 // === Légende dynamique
@@ -272,19 +301,11 @@ function updateLegend(){
   legendDiv.innerHTML=html;
 }
 
-// === Toggle sombre
-document.getElementById("toggleDark").addEventListener("click",()=>{
-  document.body.classList.toggle("dark");
-  document.querySelector(".sidebar").classList.toggle("dark");
-  document.getElementById("aboutBtn").classList.toggle("dark");
-  document.getElementById("aboutContentContainer").classList.toggle("dark");
-});
-
 // === Version flottante
 const versionBox=document.getElementById("versionFloating");
 function updateVersionBox(){ 
   const d=new Date(); 
-  versionBox.textContent="cartoff - V1.5-plan | "+d.toLocaleDateString()+" "+d.toLocaleTimeString().slice(0,5); 
+  versionBox.textContent="cartoff - V1.6-dev | "+d.toLocaleDateString()+" "+d.toLocaleTimeString().slice(0,5); 
 }
 setInterval(updateVersionBox,1000); 
 updateVersionBox();
@@ -294,28 +315,59 @@ versionBox.addEventListener("mousedown",e=>{isDragging=true;offsetX=e.clientX-ve
 document.addEventListener("mouseup",()=>isDragging=false);
 document.addEventListener("mousemove",e=>{if(isDragging){versionBox.style.left=(e.clientX-offsetX)+"px";versionBox.style.top=(e.clientY-offsetY)+"px"; versionBox.style.transform="none";}});
 
-// === Changelog HTML
+// === Modale "À propos"
 const changelogHTML = `
 <table style="width:100%; border-collapse: collapse;">
 <tr><th>Version</th><th>Date</th><th>Auteurs</th><th>Notes principales</th></tr>
-<tr><td><b>V1.5-plan</b></td><td>09/09/2025</td><td>ChatGPT, Frédéric Bouchet, Valentin Saugnier</td><td>🆕 Bouton « À propos » avec modale élégante et logo<br>🌗 Mode sombre appliqué à la sidebar et à la modale<br>🖼️ Légende dynamique enrichie avec icônes et symbologie des calques<br>✅ Conservation de toutes les fonctionnalités de la V1.4-stable<br>🐛 Corrections mineures</td></tr>
-<tr><td><b>V1.4-stable</b></td><td>15/08/2025</td><td>Frédéric Bouchet, Valentin Saugnier</td><td>🖼️ Légende dynamique<br>📍 Coordonnées et suivi du toponyme<br>🗺️ Calques GeoJSON<br>📌 Zoom sur communes<br>🛠️ Iconographie PR, CIS, SEVESO<br>🌗 Mode clair/sombre<br>⏱️ Version flottante</td></tr>
-<tr><td><b>V1.3</b></td><td>01/07/2025</td><td>Frédéric Bouchet, Valentin Saugnier</td><td>🗺️ Calques Loire<br>🔍 Zoom sur communes<br>📜 Légende statique<br>⏱️ Version flottante<br>🌞 Mode clair par défaut</td></tr>
-<tr><td><b>V1.2</b></td><td>15/06/2025</td><td>Frédéric Bouchet</td><td>⚠️ Calques risques et SEVESO<br>💬 Popups par feature<br>🛡️ Layer AASC</td></tr>
-<tr><td><b>V1.1</b></td><td>01/06/2025</td><td>Frédéric Bouchet</td><td>🗂️ Sidebar avec checkboxes<br>🖼️ Icônes points d’intérêt<br>🔍 Zoom automatique</td></tr>
-<tr><td><b>V1.0</b></td><td>01/05/2025</td><td>Frédéric Bouchet</td><td>🚀 Carte PMTiles hors-ligne<br>🗂️ Chargement statique GeoJSON<br>🖥️ Sidebar simple<br>📍 Coordonnées Lat/Lon</td></tr>
+<tr><td><b>V1.6-dev</b></td><td>25/09/2025</td><td>ChatGPT, Frédéric Bouchet, Valentin Saugnier</td><td>🆕 Fusion de tous les calques GeoJSON<br>🟢 LED MQTT, positions Meshtastic<br>✅ Coordonnées complètes</td></tr>
 </table>
 `;
 document.getElementById('aboutContent').innerHTML = changelogHTML;
 
-// === Modale "À propos"
 const aboutModal=document.getElementById("aboutModal");
 const aboutBtn=document.getElementById("aboutBtn");
 const closeBtn=document.querySelector(".modal-close");
-
 aboutBtn.onclick=()=>{ aboutModal.style.display="flex"; }
 closeBtn.onclick=()=>{ aboutModal.style.display="none"; }
 window.onclick=e=>{ if(e.target==aboutModal) aboutModal.style.display="none"; }
+
+// === MQTT / Meshtastic
+const mqttLed=document.getElementById("mqttLed");
+const showMeshtastic=document.getElementById("showMeshtastic");
+let mqttClient=null;
+
+function connectMQTT(){
+  mqttClient = mqtt.connect('wss://gaulix.fr:8084/mqtt',{
+    username:'bridge_terrain', password:'bridge_terrain'
+  });
+  mqttClient.on('connect', ()=>{
+    console.log("MQTT connecté"); mqttLed.style.background='green';
+    mqttClient.subscribe('meshtastic/#');
+  });
+  mqttClient.on('error', err=>{
+    console.error(err); mqttLed.style.background='red';
+  });
+  mqttClient.on('message',(topic,message)=>{
+    if(!showMeshtastic.checked) return;
+    try{
+      const data=JSON.parse(message.toString());
+      if(data.lat && data.lon){
+        if(!layers[data.nodeid]){
+          const m = L.marker([data.lat,data.lon],{title:data.longname||data.shortname});
+          m.bindPopup(`<b>${data.shortname}</b><br>${data.longname}<br>${new Date().toLocaleString()}`);
+          layers[data.nodeid]=m;
+          m.addTo(map);
+        } else {
+          layers[data.nodeid].setLatLng([data.lat,data.lon]);
+          layers[data.nodeid].getPopup().setContent(`<b>${data.shortname}</b><br>${data.longname}<br>${new Date().toLocaleString()}`);
+        }
+      }
+    }catch(e){ console.error(e); }
+  });
+}
+
+// Connexion automatique
+connectMQTT();
 </script>
 </body>
 </html>

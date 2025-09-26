@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Gestion documentaire - GerMaCrise</title>
+<style>
+body { margin:0; font-family:Arial,sans-serif; transition: background-color 0.3s, color 0.3s; }
+
+/* Thèmes */
+body.light { background:#fff; color:#000; }
+body.dark { background:#000; color:#ff8c00; }
+
+/* Header */
+header { padding:10px; font-size:1.5em; font-weight:bold; text-align:center; transition: background 0.3s, color 0.3s; }
+body.light header { background:#fff; color:#000; }
+body.dark header { background:#000; color:#ff8c00; }
+
+/* Sections */
+.form-section { margin:15px; background:#fff; padding:15px; border-radius:8px; box-shadow:0 0 8px rgba(0,0,0,0.1); transition: background 0.3s, color 0.3s; }
+body.dark .form-section { background:#222; color:#ff8c00; box-shadow:0 0 8px rgba(255,140,0,0.2); }
+
+/* Labels et inputs */
+label { display:block; margin-top:10px; }
+input, select, textarea { width:100%; padding:5px; margin-top:3px; border:1px solid #ccc; border-radius:4px; background:inherit; color:inherit; transition: background 0.3s, color 0.3s; }
+body.dark input, body.dark select, body.dark textarea { background:#333; color:#ff8c00; border:1px solid #ff8c00; }
+
+/* Boutons */
+button { margin-top:10px; padding:5px 10px; cursor:pointer; border:none; border-radius:4px; font-weight:bold; transition: background 0.2s, color 0.2s; }
+body.light button { background:#e0e0e0; color:#000; }
+body.light button:hover { background:#d6d6d6; }
+body.dark button { background:#555; color:#ff8c00; border:1px solid #ff8c00; }
+body.dark button:hover { background:#777; }
+
+/* Tableaux */
+table { width:100%; border-collapse:collapse; margin-top:20px; background:#fff; color:#000; transition: background 0.3s, color 0.3s; }
+body.dark table { background:#222; color:#ff8c00; }
+th, td { border:1px solid #ccc; padding:8px; text-align:left; }
+body.dark th, body.dark td { border-color:#ff8c00; }
+th { background:#eee; }
+body.dark th { background:rgba(255,140,0,0.2); }
+
+/* Prévisualisation */
+#previewContainer { margin-top:15px; border:1px solid #999; padding:10px; height:400px; overflow:auto; display:none; }
+#previewContainer iframe { width:100%; height:100%; border:none; }
+</style>
+</head>
+<body class="light">
+
+<header>
+  Gestion documentaire - GerMaCrise
+</header>
+
+<div class="form-section">
+  <h2>Liste des documents</h2>
+  <label>Filtrer par nom ou mots-clés: <input type="text" id="filterInput" onkeyup="filtrerDocs()"></label>
+  <table id="tableDocs">
+    <thead>
+      <tr>
+        <th>Nom</th>
+        <th>Type</th>
+        <th>Date</th>
+        <th>Description</th>
+        <th>Mots-clés</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+  <button onclick="exporterJSON()">📥 Exporter en JSON</button>
+  <button onclick="importerJSON()">📂 Importer JSON</button>
+</div>
+
+<div class="form-section">
+  <h2>Ajouter / Modifier un document</h2>
+  <label>Nom <input type="text" id="doc_nom"></label>
+  <label>Type 
+    <select id="doc_type">
+      <option value="pdf">PDF</option>
+      <option value="image">Image</option>
+      <option value="texte">Texte</option>
+      <option value="autre">Autre</option>
+    </select>
+  </label>
+  <label>Date <input type="date" id="doc_date"></label>
+  <label>Description <textarea id="doc_desc"></textarea></label>
+  <label>Fichier (Local ou URL):</label>
+  <div class="fichier-toggle">
+    <input type="radio" id="fichier_local" name="fichier_source" value="local" checked> <label for="fichier_local">Local</label>
+    <input type="radio" id="fichier_url" name="fichier_source" value="url"> <label for="fichier_url">URL</label>
+  </div>
+  <input type="text" id="doc_file" placeholder="Chemin ou URL du fichier">
+  <button onclick="selectLocalFile()">📁 Choisir fichier local</button>
+  <label>Mots-clés (séparés par des virgules) <input type="text" id="doc_keywords"></label>
+  <button onclick="ajouterDoc()">Ajouter / Modifier</button>
+  <button onclick="resetForm()">Annuler</button>
+</div>
+
+<div class="form-section" id="previewContainer">
+  <h2>Prévisualisation</h2>
+  <iframe id="docPreview"></iframe>
+</div>
+
+<script>
+let docs=[], editIndex=null, selectedFileObj=null;
+
+// --- Écoute thème global ---
+window.addEventListener('message', e => {
+  if(e.data.theme) {
+    document.body.className = e.data.theme;
+    localStorage.setItem("theme", e.data.theme);
+  }
+});
+
+document.addEventListener("DOMContentLoaded", ()=>{
+  document.body.className = localStorage.getItem("theme")||'light';
+  chargerDocs();
+});
+
+// --- Charger JSON ---
+function chargerDocs(){
+  fetch('json/gestion_documents.json?ts='+Date.now())
+    .then(r=>r.json())
+    .then(j=>{ docs=j.documents||[]; afficherDocs(); })
+    .catch(err=>alert("Erreur chargement documents : "+err));
+}
+
+// --- Afficher ---
+function afficherDocs(){
+  const tbody=document.getElementById('tableDocs').querySelector('tbody');
+  tbody.innerHTML='';
+  docs.forEach((d,i)=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`
+      <td>${d.nom}</td>
+      <td>${d.type}</td>
+      <td>${d.date}</td>
+      <td>${d.description}</td>
+      <td>${(d.keywords||[]).join(', ')}</td>
+      <td>
+        <button onclick="modifierDoc(${i})">✏</button>
+        <button onclick="supprimerDoc(${i})">🗑</button>
+        <button onclick="previsualiserDoc(${i})">👁️</button>
+        <button onclick="ouvrirDoc(${i})">🔗</button>
+      </td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+// --- Filtrer ---
+function filtrerDocs(){
+  const f=document.getElementById('filterInput').value.toLowerCase();
+  Array.from(document.getElementById('tableDocs').querySelector('tbody').rows).forEach((r,i)=>{
+    const d=docs[i], text=(d.nom+' '+(d.keywords||[]).join(' ')).toLowerCase();
+    r.style.display=text.includes(f)?'':'none';
+  });
+}
+
+// --- Ajouter/Modifier ---
+function ajouterDoc(){
+  const nom=document.getElementById('doc_nom').value.trim();
+  const type=document.getElementById('doc_type').value;
+  const date=document.getElementById('doc_date').value;
+  const desc=document.getElementById('doc_desc').value.trim();
+  const keywords=document.getElementById('doc_keywords').value.split(',').map(k=>k.trim()).filter(k=>k);
+  const sourceType=document.querySelector('input[name="fichier_source"]:checked').value;
+  const fileValue=document.getElementById('doc_file').value.trim();
+  if(!nom||!fileValue){ alert("Nom et fichier obligatoires"); return; }
+
+  let doc={id:editIndex!==null?docs[editIndex].id:'doc_'+Date.now(), nom, type, date, description:desc, keywords};
+  if(sourceType==='local'){
+    if(selectedFileObj){ doc.fileObj=selectedFileObj; doc.file='doc/'+selectedFileObj.name; }
+    else if(editIndex!==null && docs[editIndex].fileObj){ doc.fileObj=docs[editIndex].fileObj; doc.file=docs[editIndex].file; }
+    else { alert("Sélectionner un fichier local"); return; }
+  } else { doc.file=fileValue; }
+
+  if(editIndex!==null) docs[editIndex]=doc; else docs.push(doc);
+  selectedFileObj=null; editIndex=null;
+  afficherDocs(); resetForm();
+}
+
+// --- Modifier / Supprimer / Reset ---
+function modifierDoc(i){
+  const d=docs[i];
+  document.getElementById('doc_nom').value=d.nom;
+  document.getElementById('doc_type').value=d.type;
+  document.getElementById('doc_date').value=d.date;
+  document.getElementById('doc_desc').value=d.description;
+  document.getElementById('doc_file').value=d.file;
+  document.getElementById('doc_keywords').value=(d.keywords||[]).join(', ');
+  document.getElementById(d.fileObj?'fichier_local':'fichier_url').checked=true;
+  editIndex=i; selectedFileObj=d.fileObj||null;
+}
+function supprimerDoc(i){ if(confirm("Supprimer ce document ?")){ docs.splice(i,1); afficherDocs(); } }
+function resetForm(){ ['doc_nom','doc_type','doc_date','doc_desc','doc_file','doc_keywords'].forEach(id=>document.getElementById(id).value=''); editIndex=null; selectedFileObj=null; }
+
+// --- Prévisualiser / Ouvrir ---
+function previsualiserDoc(i){
+  const d=docs[i], c=document.getElementById('previewContainer'), f=document.getElementById('docPreview'); c.style.display='block';
+  if(d.fileObj){
+    const r=new FileReader();
+    r.onload=e=>{
+      const content=e.target.result;
+      if(d.type==='texte') f.srcdoc=`<pre>${content.replace(/</g,"&lt;").replace(/>/g,"&gt;")}</pre>`;
+      else if(d.type==='image') f.srcdoc=`<img src="${content}" style="max-width:100%; max-height:100%;">`;
+      else if(d.type==='pdf'){ f.src=URL.createObjectURL(d.fileObj); }
+      else f.srcdoc='<p>Prévisualisation non disponible</p>';
+    };
+    d.type==='image'?r.readAsDataURL(d.fileObj):r.readAsText(d.fileObj);
+  } else {
+    const path=d.file.startsWith('http')||d.file.startsWith('doc/')?d.file:'doc/'+d.file;
+    if(d.type==='texte') fetch(path).then(r=>r.text()).then(t=>f.srcdoc=`<pre>${t.replace(/</g,"&lt;").replace(/>/g,"&gt;")}</pre>`).catch(()=>f.srcdoc='<p>Impossible de prévisualiser</p>');
+    else f.src=path;
+  }
+}
+function ouvrirDoc(i){
+  const d=docs[i], path=d.file.startsWith('http')||d.file.startsWith('doc/')?d.file:'doc/'+d.file;
+  d.fileObj?window.open(URL.createObjectURL(d.fileObj),'_blank'):window.open(path,'_blank');
+}
+
+// --- Exporter / Importer ---
+function exporterJSON(){
+  const dataStr=JSON.stringify({documents:docs.map(d=>({...d,fileObj:undefined}))},null,2);
+  const blob=new Blob([dataStr],{type:"application/json"});
+  const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download="gestion_documents.json"; a.click();
+}
+function importerJSON(){
+  const input=document.createElement('input'); input.type='file'; input.accept='.json';
+  input.onchange=e=>{
+    const file=e.target.files[0]; if(!file){ alert("Aucun fichier"); return; }
+    const r=new FileReader();
+    r.onload=ev=>{
+      try{ const j=JSON.parse(ev.target.result); if(!Array.isArray(j.documents)) throw "JSON invalide"; docs=j.documents; afficherDocs(); alert("Importation réussie !"); }
+      catch(err){ alert("Erreur lecture JSON: "+err); }
+    }; r.readAsText(file);
+  };
+  input.click();
+}
+
+// --- Fichier local ---
+function selectLocalFile(){
+  const input=document.createElement('input'); input.type='file';
+  input.onchange=e=>{
+    const file=e.target.files[0]; if(file){ selectedFileObj=file; document.getElementById('doc_file').value='doc/'+file.name; }
+  };
+  input.click();
+}
+</script>
+</body>
+</html>

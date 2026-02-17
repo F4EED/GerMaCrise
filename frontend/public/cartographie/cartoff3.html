@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>cartoff3 - GerMaCrise 0.9-Dev</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<!-- Préchargement du fichier pmtiles désactivé temporairement pour déboguer les Range requests -->
+<!-- <link rel="preload" href="pmtiles/mymap.pmtiles" as="fetch" crossorigin="anonymous" /> -->
+<link rel="stylesheet" href="css/leaflet.css" />
+<link rel="stylesheet" href="css/cartoff.css" />
+</head>
+<body>
+
+<div class="sidebar" id="layerMenu">
+  <div class="sidebar-header" id="dragHandle">Calques GeoJSON (déplacer ici)</div>
+
+  <details>
+    <summary>PostGIS</summary>
+    <div id="postgisLayers"></div>
+  </details>
+
+  <details>
+    <summary>Carroyage</summary>
+    <div id="carroyageLayers"></div>
+  </details>
+
+  <details>
+    <summary>Mode</summary>
+    <div id="modeLayers" style="padding: 5px 0;">
+      <label class="toggle-label">
+        <span>Gestion de crise</span>
+        <span class="toggle-switch">
+          <input type="checkbox" id="toggle_gestion_crise">
+          <span class="toggle-slider"></span>
+        </span>
+      </label>
+      <label class="toggle-label">
+        <span>Recherche & sauvetage (SAR)</span>
+        <span class="toggle-switch">
+          <input type="checkbox" id="toggle_sar">
+          <span class="toggle-slider"></span>
+        </span>
+      </label>
+    </div>
+  </details>
+
+  <details disabled style="opacity: 0.5; pointer-events: none; cursor: not-allowed;">
+    <summary>Positions Meshtastic</summary>
+    <label class="toggle-label">
+      <span>Afficher positions Meshtastic <span id="mqttLed"></span></span>
+      <span class="toggle-switch">
+        <input type="checkbox" id="showMeshtastic" disabled>
+        <span class="toggle-slider"></span>
+      </span>
+    </label>
+  </details>
+
+  <details disabled style="opacity: 0.5; pointer-events: none; cursor: not-allowed;">
+    <summary>Meshcore</summary>
+    <div id="meshcoreLayers"></div>
+  </details>
+
+  <details>
+    <summary>Recherche par</summary>
+    <div style="padding: 5px 0;">
+      <label for="searchDepartementSelect"><b>Département :</b></label>
+      <select id="searchDepartementSelect" style="width: 100%; margin-bottom: 10px;">
+        <option value="">-- Choisir un département --</option>
+      </select>
+      <label for="searchCommuneSelect"><b>Commune :</b></label>
+      <select id="searchCommuneSelect" style="width: 100%; margin-bottom: 10px;" disabled>
+        <option value="">-- Choisir d'abord un département --</option>
+      </select>
+      <label for="searchRueSelect"><b>Rue :</b></label>
+      <select id="searchRueSelect" style="width: 100%; margin-bottom: 10px;" disabled>
+        <option value="">-- Choisir d'abord une commune --</option>
+      </select>
+      <label for="searchNumeroSelect"><b>Numéro :</b></label>
+      <select id="searchNumeroSelect" style="width: 100%; margin-bottom: 10px;" disabled>
+        <option value="">-- Choisir d'abord une rue --</option>
+      </select>
+    </div>
+  </details>
+
+  <details>
+    <summary>Démo Département 42</summary>
+    <details>
+      <summary>Département de la Loire</summary>
+      <div id="departementLayers"></div>
+      <label for="communeSelect"><b>Zoom sur une commune :</b></label>
+      <select id="communeSelect"><option value="">-- Choisir une commune --</option></select>
+    </details>
+
+    <details>
+      <summary>SDIS 42</summary>
+      <div id="sdis42Layers"></div>
+    </details>
+
+    <details>
+      <summary>Gestion des risques</summary>
+      <div id="riskLayers"></div>
+    </details>
+
+    <details>
+      <summary>Associations Agréées de Sécurité Civile</summary>
+      <div id="AASCLayers"></div>
+    </details>
+  </details>
+
+  <details id="corseMenu" style="display:none;">
+    <summary>Départements de Corse</summary>
+    <div id="CorseLayers"></div>
+    <label for="communeCorseSelect"><b>Zoom sur une commune :</b></label>
+    <select id="communeCorseSelect"><option value="">-- Choisir une commune --</option></select>
+  </details>
+
+  <div id="legend"><b>Légende :</b><br>– aucun calque actif –</div>
+  <div id="historyStatus" style="font-size:0.85rem;opacity:0.6;margin-top:6px;">Chargement de l'historique Meshtastic…</div>
+  <div id="liveNodes" style="font-size:0.85rem;opacity:0.6;">Nœuds en live : 0</div>
+  <img id="sidebarLogo" src="images/Logo_F4EED.png" alt="Logo D42">
+  <button id="aboutBtn">À propos</button>
+  <div id="errorMessages"></div>
+</div>
+
+<div id="map"></div>
+<div id="coords">Déplacez la souris sur la carte...</div>
+<div id="versionFloating" title="Déplacez pour mémoriser la position"></div>
+
+<div id="aboutModal" class="modal">
+  <div class="modal-content" id="aboutContentContainer">
+    <span class="modal-close">&times;</span>
+    <img src="images/Logo_F4EED.png" alt="Logo D42" style="display:block; margin:10px auto; max-width:120px;">
+    <h2 style="text-align:center;">À propos</h2>
+    <div id="aboutContent"></div>
+  </div>
+</div>
+
+<script src="js/leaflet.js"></script>
+<script src="js/pmtiles.js"></script>
+<script src="js/protomaps-leaflet.js"></script>
+<script src="js/proj4.js"></script>
+<!-- Client MQTT pour navigateur -->
+<script src="js/mqtt.min.js"></script>
+<script src="js/html2canvas.min.js"></script>
+<script src="js/leaflet-image.js"></script>
+<script src="js/jspdf.umd.min.js"></script>
+<script src="js/cartoff.js?v=2025-01-15-a-propos-fix"></script>
+<script src="js/cartoff3.js?v=2025-11-09-departements-pg"></script>
+<script>
+console.log("✓ Fonction DFCI + ajout GeoJSON chargés (cartoff3)");
+</script>
+<!-- Chargeur de version -->
+<script src="js/version-loader.js"></script>
+<script>
+(async function() {
+  await updateVersionInPage();
+  document.title = document.title.replace(/0\.9-?Dev|0\.9\.5-Dev/g, await loadVersion());
+})();
+</script>
+<!-- Module de recherche par département/commune -->
+<script src="js/recherche-geographique.js"></script>
+<script>
+// Fermer tous les sous-menus (details) par défaut au chargement uniquement
+// Ne pas bloquer l'ouverture manuelle par l'utilisateur
+(function() {
+  let initializationComplete = false;
+  
+  function closeAllDetails() {
+    document.querySelectorAll('#layerMenu details').forEach(details => {
+      // Ne pas fermer les éléments disabled
+      if (!details.hasAttribute('disabled')) {
+        details.removeAttribute('open');
+      }
+    });
+  }
+  
+  // Fermer les menus une seule fois au chargement
+  function initializeDetails() {
+    if (initializationComplete) return;
+    
+    closeAllDetails();
+    initializationComplete = true;
+    console.log('[Details] Menus fermés au chargement, maintenant accessibles');
+  }
+  
+  // Initialiser quand le DOM est prêt
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+      // Attendre un peu pour que tous les scripts se chargent
+      setTimeout(initializeDetails, 200);
+    });
+  } else {
+    // DOM déjà chargé, attendre un peu quand même
+    setTimeout(initializeDetails, 200);
+  }
+})();
+</script>
+</body>
+</html>

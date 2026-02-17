@@ -1,0 +1,260 @@
+html, body { margin:0; height:100%; }
+#map { width:100%; height:100vh; background:#ccc; transition: background 0.3s; }
+
+.sidebar { 
+  position:absolute; top:10px; right:10px; z-index:2000; 
+  background:white; padding:10px; border-radius:8px; 
+  box-shadow:0 2px 6px rgba(0,0,0,0.3); max-width:360px; 
+  font-family:Arial,sans-serif; font-size:14px; 
+  user-select:none; transition: background 0.3s, color 0.3s;
+}
+.sidebar.dark { background:#222; color:#eee; box-shadow:0 2px 6px rgba(0,0,0,0.6);}
+.sidebar-header { cursor: grab; font-weight:bold; margin-bottom:8px; }
+
+/* Style uniforme pour tous les menus principaux (niveau 1) */
+details {
+  margin-bottom: 8px;
+}
+details summary {
+  cursor: pointer;
+  font-weight: bold;
+}
+
+/* Style pour le contenu des menus principaux - indentation cohérente */
+details > div {
+  margin-left: 10px;
+  padding-left: 5px;
+  margin-top: 4px;
+}
+
+/* Style pour tous les sous-menus (niveau 2) - details imbriqués dans un details */
+details details {
+  margin-left: 20px;
+  margin-top: 4px;
+  margin-bottom: 4px;
+  padding-left: 10px;
+  border-left: 2px solid #ddd;
+}
+details details summary {
+  font-weight: normal;
+  font-size: 0.95em;
+  color: #555;
+  padding-left: 5px;
+}
+
+/* Style pour le contenu des sous-menus */
+details details > div,
+details details > label {
+  margin-left: 0;
+  padding-left: 5px;
+}
+
+/* Style pour les sous-menus de niveau 3 (si nécessaire) */
+details details details {
+  margin-left: 20px;
+  padding-left: 10px;
+  border-left: 2px solid #ccc;
+}
+details details details summary {
+  font-weight: normal;
+  font-size: 0.9em;
+  color: #666;
+}
+
+/* Support du mode sombre */
+body.dark details details {
+  border-left-color: #555;
+}
+body.dark details details summary {
+  color: #bbb;
+}
+body.dark details details details {
+  border-left-color: #666;
+}
+body.dark details details details summary {
+  color: #999;
+}
+label { cursor:pointer; display:block; margin-bottom:6px; }
+
+/* Toggle Switch Moderne */
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 50px;
+  height: 26px;
+  margin-left: 10px;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: 0.3s;
+  border-radius: 26px;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 20px;
+  width: 20px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: 0.3s;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.toggle-switch input:checked + .toggle-slider {
+  background-color: #28a745;
+}
+
+.toggle-switch input:checked + .toggle-slider:before {
+  transform: translateX(24px);
+}
+
+.toggle-switch input:focus + .toggle-slider {
+  box-shadow: 0 0 1px #28a745, 0 0 0 3px rgba(40, 167, 69, 0.2);
+}
+
+.toggle-switch:hover .toggle-slider {
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.2), 0 0 0 3px rgba(0,0,0,0.1);
+}
+
+.toggle-switch input:checked + .toggle-slider:hover {
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.2), 0 0 0 3px rgba(40, 167, 69, 0.2);
+}
+
+.toggle-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+  cursor: pointer;
+  user-select: none;
+}
+
+.toggle-label:hover {
+  background-color: rgba(0,0,0,0.03);
+  border-radius: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+  margin-left: -5px;
+  margin-right: -5px;
+}
+
+body.dark .toggle-label:hover {
+  background-color: rgba(255,255,255,0.05);
+}
+
+#coords { 
+  position:absolute; bottom:10px; left:10px; z-index:3000; 
+  background:rgba(255,255,255,0.92); padding:6px 10px; 
+  border-radius:6px; font-family:Arial,sans-serif; font-size:13px; 
+  box-shadow:0 1px 4px rgba(0,0,0,0.3); min-width:320px; 
+  user-select:none; pointer-events:none; transition: background 0.3s, color 0.3s;
+}
+
+body.dark #map { background:#444; }
+body.dark #coords { background: rgba(50,50,50,0.85); color:white; }
+
+#legend {
+  position:relative;
+  margin-top:8px;
+  padding:6px 10px;
+  border-radius:6px;
+  font-size:13px;
+  box-shadow:0 1px 4px rgba(0,0,0,0.3);
+  background:white;
+  transition: background 0.3s, color 0.3s;
+}
+body.dark #legend { background:#d0d0d0; color:#222; box-shadow:0 1px 4px rgba(0,0,0,0.6); }
+
+#sidebarLogo { display:block; margin:10px auto 0 auto; max-width:70px; }
+#versionFloating{
+  position:absolute; top:90px; left:10px; bottom:auto; right:auto;
+  z-index:4000; background: rgba(0,0,0,0.7); color:white; 
+  padding:6px 10px; border-radius:6px; font-family:Arial,sans-serif; font-size:12px; 
+  cursor:move; user-select:none; text-align:center;
+}
+
+.modal {
+  display:none; position:fixed; z-index:5000; left:0; top:0;
+  width:100%; height:100%; overflow:auto;
+  background-color:rgba(0,0,0,0.6); justify-content:center; align-items:center;
+}
+.modal-content {
+  background:#fff; padding:20px; border-radius:8px; max-width:800px; width:90%;
+  max-height:90%; overflow-y:auto;
+  box-shadow:0 4px 12px rgba(0,0,0,0.5);
+}
+.modal-content.dark { background:#222; color:#eee; }
+.modal-close {
+  color:#aaa; float:right; font-size:24px; font-weight:bold; cursor:pointer;
+}
+.modal-close:hover { color:black; }
+
+#aboutBtn { display:block; margin:10px 0; padding:6px 10px; cursor:pointer; background:#eee; border:none; border-radius:4px; }
+#aboutBtn.dark { background:#555; color:white; }
+
+#mqttLed {
+  display:inline-block; width:12px; height:12px; border-radius:50%; margin-left:6px; vertical-align:middle;
+  background:red; border:1px solid #555;
+}
+
+#errorMessages { margin-top:8px; color:#b00; font-size:13px; }
+body.dark #errorMessages { color:#f88; }
+
+/* Info-bulle de géolocalisation */
+#locationTooltip {
+  position: absolute;
+  z-index: 3500;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-family: Arial, sans-serif;
+  font-size: 13px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  pointer-events: none;
+  user-select: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  transform: translate(-50%, -100%) translateY(-10px);
+  white-space: nowrap;
+  max-width: 300px;
+}
+body.dark #locationTooltip {
+  background: rgba(50, 50, 50, 0.95);
+  color: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+}
+#locationTooltip.visible {
+  opacity: 1;
+}
+#locationTooltip .tooltip-title {
+  font-weight: bold;
+  margin-bottom: 4px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  padding-bottom: 4px;
+}
+body.dark #locationTooltip .tooltip-title {
+  border-bottom-color: rgba(255, 255, 255, 0.2);
+}
+#locationTooltip .tooltip-line {
+  margin: 2px 0;
+}
+
+
+

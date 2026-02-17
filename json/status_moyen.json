@@ -1,0 +1,20 @@
+[
+  {
+    "status_moyen": "Disponible"
+  },
+  {
+    "status_moyen": "En mission"
+  },
+  {
+    "status_moyen": "En panne"
+  },
+  {
+    "status_moyen": "Accidenté"
+  },
+  {
+    "status_moyen": "Volé"
+  },
+  {
+    "status_moyen": "Autre"
+  }
+]

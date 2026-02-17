@@ -1,0 +1,27 @@
+[
+  {
+    "Nom_Equipe": "Équipe SAR Alpha",
+    "composition_equipe": "4 secouristes, 1 chef d'équipe, 2 chiens de recherche",
+    "remarque": "Équipe spécialisée en recherche en terrain montagneux, disponible 24/7"
+  },
+  {
+    "Nom_Equipe": "Équipe SAR Bravo",
+    "composition_equipe": "6 secouristes, 1 médecin, 1 coordinateur opérationnel, drone de recherche",
+    "remarque": "Équipe polyvalente avec moyens aériens, intervention rapide en zone urbaine et périurbaine"
+  },
+  {
+    "Nom_Equipe": "Équipe SAR Charlie",
+    "composition_equipe": "5 secouristes, 1 vétérinaire, 1 technicien en communication radio",
+    "remarque": "Équipe spécialisée dans le sauvetage d'animaux et missions longue durée, équipée en VHF/UHF"
+  },
+  {
+    "Nom_Equipe": "Équipe SAR Delta",
+    "composition_equipe": "8 secouristes, 2 chefs d'équipe, 1 logistique, 1 matériel de corde",
+    "remarque": "Équipe d'intervention rapide pour recherches en milieu difficile, spécialisation spéléologie"
+  },
+  {
+    "Nom_Equipe": "Équipe SAR Echo",
+    "composition_equipe": "3 secouristes, 1 infirmier, 1 conducteur tout-terrain",
+    "remarque": "Équipe légère pour interventions rapides en zone difficile d'accès, véhicule 4x4 équipé"
+  }
+]

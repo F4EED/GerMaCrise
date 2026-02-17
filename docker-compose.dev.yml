@@ -1,0 +1,19 @@
+# Configuration pour le développement
+# Utilisez: docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
+
+services:
+  backend:
+    volumes:
+      - ./backend:/app
+    environment:
+      - DATABASE_URL=postgresql://maincourante:maincourante_pass@db:5432/main_courante
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  frontend:
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+      - REACT_APP_API_URL=http://localhost:8000
+

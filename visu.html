@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tableau de Synthèse - GerMaCrise</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1920px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            gap: 20px;
+            height: calc(100vh - 40px);
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e0e0e0;
+            cursor: pointer;
+            user-select: none;
+        }
+        
+        .card-header:hover {
+            opacity: 0.8;
+        }
+        
+        .card-collapsed .card-content {
+            display: none;
+        }
+        
+        .card-toggle {
+            font-size: 1.2em;
+            transition: transform 0.3s ease;
+            display: inline-block;
+        }
+        
+        .card-collapsed .card-toggle {
+            transform: rotate(-90deg);
+        }
+
+        .card-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .refresh-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+
+        .refresh-btn:hover {
+            background: #5568d3;
+        }
+
+        .refresh-btn:active {
+            transform: scale(0.98);
+        }
+
+        .card-content {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        /* Tableau de bord */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+
+        .stat-item {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-item h4 {
+            font-size: 14px;
+            margin-bottom: 10px;
+            opacity: 0.9;
+        }
+
+        .stat-number {
+            font-size: 36px;
+            font-weight: 700;
+        }
+
+        .stat-details {
+            margin-top: 12px;
+            font-size: 12px;
+            opacity: 0.9;
+        }
+
+        .stat-detail-item {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 6px;
+        }
+
+        /* Liste main courante */
+        .entry-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .entry-item {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 16px;
+            border-radius: 6px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .entry-item:hover {
+            transform: translateX(4px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .entry-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 8px;
+        }
+
+        .entry-date {
+            font-size: 12px;
+            color: #666;
+            font-weight: 600;
+        }
+
+        .entry-type {
+            background: #667eea;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .entry-content {
+            color: #333;
+            line-height: 1.6;
+            margin-bottom: 8px;
+        }
+
+        .entry-footer {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            color: #999;
+        }
+
+        .entry-activation {
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .entry-user {
+            color: #666;
+        }
+
+        /* Placeholder pour parties basses */
+        .placeholder {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #999;
+            font-style: italic;
+            font-size: 18px;
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #667eea;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Error */
+        .error {
+            background: #fee;
+            color: #c33;
+            padding: 16px;
+            border-radius: 6px;
+            border-left: 4px solid #c33;
+        }
+
+        /* Scrollbar */
+        .card-content::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .card-content::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        .card-content::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 4px;
+        }
+
+        .card-content::-webkit-scrollbar-thumb:hover {
+            background: #5568d3;
+        }
+    </style>
+</head>
+<body>
+    <div style="margin-bottom: 20px; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);">
+        <h1 style="margin: 0 0 20px 0; color: #667eea; font-size: 28px; font-weight: 700;">
+            📊 Tableau de synthèse de l'activation
+        </h1>
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <label for="activation-select" style="font-weight: 600; color: #333; font-size: 16px;">
+                Sélectionner une activation :
+            </label>
+            <select 
+                id="activation-select" 
+                style="
+                    flex: 1;
+                    padding: 12px 16px;
+                    border: 2px solid #e0e0e0;
+                    border-radius: 8px;
+                    font-size: 16px;
+                    background: white;
+                    color: #333;
+                    cursor: pointer;
+                    transition: border-color 0.3s;
+                "
+                onchange="handleActivationChange()"
+            >
+                <option value="">Chargement des activations...</option>
+            </select>
+            <button 
+                class="refresh-btn" 
+                onclick="loadActivations()"
+                style="padding: 12px 20px;"
+            >
+                🔄 Actualiser
+            </button>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Haut gauche : Tableau de bord -->
+        <div class="card" id="card-dashboard">
+            <div class="card-header" onclick="toggleCard('card-dashboard')">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span class="card-toggle">▼</span>
+                    <h2 class="card-title" style="margin: 0;">📊 Tableau de bord</h2>
+                </div>
+                <button class="refresh-btn" onclick="event.stopPropagation(); loadDashboard()">🔄 Actualiser</button>
+            </div>
+            <div class="card-content" id="dashboard-content">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Chargement des statistiques...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Haut droite : Dernières entrées main courante -->
+        <div class="card" id="card-main-courante">
+            <div class="card-header" onclick="toggleCard('card-main-courante')">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span class="card-toggle">▼</span>
+                    <h2 class="card-title" style="margin: 0;">📝 Dernières entrées</h2>
+                </div>
+                <button class="refresh-btn" onclick="event.stopPropagation(); loadMainCourante()">🔄 Actualiser</button>
+            </div>
+            <div class="card-content" id="main-courante-content">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Chargement de la main courante...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bas gauche : Placeholder -->
+        <div class="card card-collapsed" id="card-section3">
+            <div class="card-header" onclick="toggleCard('card-section3')">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span class="card-toggle">▶</span>
+                    <h2 class="card-title" style="margin: 0;">📋 Section 3</h2>
+                </div>
+            </div>
+            <div class="card-content">
+                <div class="placeholder">
+                    Contenu à venir...
+                </div>
+            </div>
+        </div>
+
+        <!-- Bas droite : Placeholder -->
+        <div class="card card-collapsed" id="card-section4">
+            <div class="card-header" onclick="toggleCard('card-section4')">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span class="card-toggle">▶</span>
+                    <h2 class="card-title" style="margin: 0;">📋 Section 4</h2>
+                </div>
+            </div>
+            <div class="card-content">
+                <div class="placeholder">
+                    Contenu à venir...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Utiliser le même domaine que la page (nginx fait le proxy)
+        const API_URL = '/api';
+        
+        // Token d'authentification (optionnel, peut être vide pour accès public)
+        let AUTH_TOKEN = localStorage.getItem('visu_token') || '';
+        const VISU_PASSWORD = 'DHqQjGk3@Iih^IYUiUwlcFhZSf3*02TB'; // Mot de passe de l'utilisateur visu
+        
+        // Activation sélectionnée
+        let selectedActivationId = null;
+        let selectedActivationTitre = null;
+        
+        // Fonction pour obtenir un token (appelée une fois au chargement)
+        async function getAuthToken() {
+            if (AUTH_TOKEN) {
+                // Vérifier si le token est encore valide
+                try {
+                    const testResponse = await fetch(`${API_URL}/public/dashboard/stats`, {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${AUTH_TOKEN}`
+                        },
+                        mode: 'cors'
+                    });
+                    if (testResponse.ok) {
+                        return AUTH_TOKEN;
+                    }
+                } catch (e) {
+                    // Token invalide, on va en créer un nouveau
+                }
+            }
+            
+            // Essayer de se connecter avec l'utilisateur visu
+            try {
+                const formData = new URLSearchParams();
+                formData.append('username', 'visu');
+                formData.append('password', VISU_PASSWORD);
+                
+                const response = await fetch(`${API_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: formData,
+                    mode: 'cors',
+                    credentials: 'omit'
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    AUTH_TOKEN = data.access_token;
+                    localStorage.setItem('visu_token', AUTH_TOKEN);
+                    return AUTH_TOKEN;
+                } else {
+                    console.log('Échec de l\'authentification, utilisation en mode public');
+                }
+            } catch (error) {
+                console.log('Authentification optionnelle échouée, utilisation en mode public:', error);
+            }
+            
+            return null;
+        }
+
+        // Formatage de date
+        function formatDate(dateString) {
+            if (!dateString) return 'N/A';
+            const date = new Date(dateString);
+            return date.toLocaleString('fr-FR', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        // Chargement des activations
+        async function loadActivations() {
+            const select = document.getElementById('activation-select');
+            select.innerHTML = '<option value="">Chargement...</option>';
+            
+            try {
+                const token = await getAuthToken();
+                const headers = {
+                    'Content-Type': 'application/json',
+                };
+                if (token) {
+                    headers['Authorization'] = `Bearer ${token}`;
+                }
+                
+                const response = await fetch(`${API_URL}/public/activations/active`, {
+                    method: 'GET',
+                    headers: headers,
+                    mode: 'cors',
+                    credentials: 'omit'
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Erreur HTTP ${response.status}`);
+                }
+                
+                const activations = await response.json();
+                
+                select.innerHTML = '<option value="">-- Sélectionner une activation --</option>';
+                activations.forEach(activation => {
+                    const option = document.createElement('option');
+                    option.value = activation.id;
+                    option.textContent = activation.titre || `Activation #${activation.id}`;
+                    select.appendChild(option);
+                });
+                
+                // Si une activation était déjà sélectionnée, la restaurer
+                if (selectedActivationId) {
+                    select.value = selectedActivationId;
+                    const selectedOption = select.options[select.selectedIndex];
+                    if (selectedOption) {
+                        selectedActivationTitre = selectedOption.textContent;
+                        updateTitle();
+                    }
+                }
+            } catch (error) {
+                select.innerHTML = '<option value="">Erreur de chargement</option>';
+                console.error('Erreur chargement activations:', error);
+            }
+        }
+
+        // Gestion du changement d'activation
+        function handleActivationChange() {
+            const select = document.getElementById('activation-select');
+            selectedActivationId = select.value ? parseInt(select.value) : null;
+            
+            // Récupérer le titre de l'activation sélectionnée
+            if (selectedActivationId) {
+                const selectedOption = select.options[select.selectedIndex];
+                selectedActivationTitre = selectedOption.textContent;
+                updateTitle();
+                loadDashboard();
+                loadMainCourante();
+            } else {
+                selectedActivationTitre = null;
+                updateTitle();
+                // Afficher un message si aucune activation n'est sélectionnée
+                document.getElementById('dashboard-content').innerHTML = 
+                    '<div class="placeholder">Sélectionnez une activation pour afficher les statistiques</div>';
+                document.getElementById('main-courante-content').innerHTML = 
+                    '<div class="placeholder">Sélectionnez une activation pour afficher les entrées</div>';
+            }
+        }
+
+        // Mise à jour du titre
+        function updateTitle() {
+            const titleElement = document.querySelector('h1');
+            if (titleElement) {
+                if (selectedActivationTitre) {
+                    titleElement.textContent = `📊 Tableau de synthèse de l'activation : ${selectedActivationTitre}`;
+                } else {
+                    titleElement.textContent = '📊 Tableau de synthèse de l\'activation';
+                }
+            }
+        }
+
+        // Chargement du tableau de bord
+        async function loadDashboard() {
+            if (!selectedActivationId) {
+                document.getElementById('dashboard-content').innerHTML = 
+                    '<div class="placeholder">Sélectionnez une activation pour afficher les statistiques</div>';
+                return;
+            }
+            
+            const content = document.getElementById('dashboard-content');
+            content.innerHTML = '<div class="loading"><div class="spinner"></div><p>Chargement des statistiques...</p></div>';
+
+            try {
+                const token = await getAuthToken();
+                const headers = {
+                    'Content-Type': 'application/json',
+                };
+                if (token) {
+                    headers['Authorization'] = `Bearer ${token}`;
+                }
+                
+                const response = await fetch(`${API_URL}/public/dashboard/stats/${selectedActivationId}`, {
+                    method: 'GET',
+                    headers: headers,
+                    mode: 'cors',
+                    credentials: 'omit'
+                });
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Erreur HTTP ${response.status}: ${errorText}`);
+                }
+                const data = await response.json();
+
+                let html = '<div class="stats-grid">';
+
+                // Personnel(s) engagé(s)
+                html += `
+                    <div class="stat-item">
+                        <h4>Personnel(s) engagé(s)</h4>
+                        <div class="stat-number">${data.personnel?.total || 0}</div>
+                    </div>
+                `;
+
+                // Moyen(s) engagé(s)
+                html += `
+                    <div class="stat-item">
+                        <h4>Moyen(s) engagé(s)</h4>
+                        <div class="stat-number">${data.moyens?.total || 0}</div>
+                    </div>
+                `;
+
+                // Véhicule(s) en mission
+                html += `
+                    <div class="stat-item">
+                        <h4>Véhicule(s) en mission</h4>
+                        <div class="stat-number">${data.vehicules?.total || 0}</div>
+                    </div>
+                `;
+
+                html += '</div>';
+                content.innerHTML = html;
+            } catch (error) {
+                content.innerHTML = `<div class="error">Erreur lors du chargement: ${error.message}</div>`;
+                console.error('Erreur dashboard:', error);
+            }
+        }
+
+        // Chargement de la main courante
+        async function loadMainCourante() {
+            if (!selectedActivationId) {
+                document.getElementById('main-courante-content').innerHTML = 
+                    '<div class="placeholder">Sélectionnez une activation pour afficher les entrées</div>';
+                return;
+            }
+            
+            const content = document.getElementById('main-courante-content');
+            content.innerHTML = '<div class="loading"><div class="spinner"></div><p>Chargement de la main courante...</p></div>';
+
+            try {
+                const token = await getAuthToken();
+                const headers = {
+                    'Content-Type': 'application/json',
+                };
+                if (token) {
+                    headers['Authorization'] = `Bearer ${token}`;
+                }
+                
+                const response = await fetch(`${API_URL}/public/main-courante/latest/${selectedActivationId}?limit=6`, {
+                    method: 'GET',
+                    headers: headers,
+                    mode: 'cors',
+                    credentials: 'omit'
+                });
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Erreur HTTP ${response.status}: ${errorText}`);
+                }
+                const entries = await response.json();
+
+                if (entries.length === 0) {
+                    content.innerHTML = '<div class="placeholder">Aucune entrée disponible</div>';
+                    return;
+                }
+
+                let html = '<div class="entry-list">';
+                entries.forEach(entry => {
+                    const userName = entry.utilisateur 
+                        ? `${entry.utilisateur.prenom || ''} ${entry.utilisateur.nom || ''}`.trim() || entry.utilisateur.username
+                        : 'Utilisateur inconnu';
+                    
+                    html += `
+                        <div class="entry-item">
+                            <div class="entry-header">
+                                <span class="entry-date">${formatDate(entry.date_heure)}</span>
+                                ${entry.type_entree ? `<span class="entry-type">${entry.type_entree}</span>` : ''}
+                            </div>
+                            <div class="entry-content">${entry.contenu || 'Aucun contenu'}</div>
+                            <div class="entry-footer">
+                                ${entry.activation ? `<span class="entry-activation">${entry.activation.titre}</span>` : '<span></span>'}
+                                <span class="entry-user">${userName}</span>
+                            </div>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+                content.innerHTML = html;
+            } catch (error) {
+                content.innerHTML = `<div class="error">Erreur lors du chargement: ${error.message}</div>`;
+                console.error('Erreur main courante:', error);
+            }
+        }
+
+        // Fonction pour réduire/agrandir une section
+        function toggleCard(cardId) {
+            const card = document.getElementById(cardId);
+            if (card) {
+                card.classList.toggle('card-collapsed');
+                const toggle = card.querySelector('.card-toggle');
+                if (toggle) {
+                    if (card.classList.contains('card-collapsed')) {
+                        toggle.textContent = '▶';
+                    } else {
+                        toggle.textContent = '▼';
+                    }
+                }
+            }
+        }
+
+        // Chargement initial
+        window.addEventListener('DOMContentLoaded', () => {
+            loadActivations();
+            
+            // Actualisation automatique toutes les 30 secondes
+            setInterval(() => {
+                if (selectedActivationId) {
+                    loadDashboard();
+                    loadMainCourante();
+                }
+            }, 30000);
+        });
+    </script>
+</body>
+</html>
+

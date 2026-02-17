@@ -1,0 +1,67 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+.venv
+*.egg-info/
+dist/
+build/
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# React
+frontend/build/
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.test.local
+frontend/.env.production.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+*.log
+
+# Database
+*.db
+*.sqlite
+
+# Environment
+.env
+.env.local
+
+# Coverage
+coverage/
+.nyc_output/
+
+# Misc
+*.bak
+*.tmp
+* - Copie.yml
+* - Copie.*
+
+# Dumps et sauvegardes locales (éviter de committer des dumps)
+data/*.dump
+*.dump
+
+# Fichiers BAN volumineux (à fournir séparément ou via seed)
+json/BAN_*.geojson
+backend/json/BAN_*.geojson

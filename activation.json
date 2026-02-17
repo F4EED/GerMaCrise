@@ -1,0 +1,63 @@
+[
+  {
+    "id": "1",
+    "titre": "Activation incendie secteur nord",
+    "type": "Incendie",
+    "date_creation": "2025-09-14T09:30",
+    "date_cloture": "2025-10-29T11:39",
+    "status": "clôturée",
+    "responsable": "",
+    "redacteur": "",
+    "structure_implique": [],
+    "commune": "",
+    "secteur": "Nord",
+    "description_creation_activation": "Description détaillée de l’activation"
+  },
+  {
+    "id": "2",
+    "titre": "Activation inondation secteur sud",
+    "type": "Inondation",
+    "date_creation": "2025-09-13T14:00",
+    "date_cloture": "2025-09-13T18:00",
+    "status": "clôturée",
+    "responsable": "",
+    "redacteur": "",
+    "structure_implique": [],
+    "commune": "",
+    "secteur": "Sud",
+    "description_creation_activation": "Description détaillée de l’activation"
+  },
+  {
+    "id": "20251025-132231",
+    "titre": "titre",
+    "type": "type",
+    "date_creation": "2025-10-25T11:22",
+    "date_cloture": "2025-10-29T11:47",
+    "status": "clôturée",
+    "responsable": "agent plouf 69 ça barbotte",
+    "redacteur": "Gimenez Grégory",
+    "structure_implique": [
+      "CG 42"
+    ],
+    "commune": "Ricamarie",
+    "secteur": "",
+    "description_creation_activation": ""
+  },
+  {
+    "id": "20251026-051911",
+    "titre": "test création",
+    "type": "test",
+    "date_creation": "2025-10-26T04:19",
+    "date_cloture": "",
+    "status": "en cours",
+    "responsable": "plouf glurpss",
+    "redacteur": "agent plouf 69 ça barbotte",
+    "structure_implique": [
+      "ploufff 42",
+      "plouff 69"
+    ],
+    "commune": "Saint-Just-Saint-Rambert",
+    "secteur": "bord de loire",
+    "description_creation_activation": "description"
+  }
+]

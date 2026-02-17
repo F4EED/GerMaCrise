@@ -1,0 +1,374 @@
+.layout {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.navbar {
+  padding: 1rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: var(--shadow-lg);
+  border-bottom: 1px solid var(--border-color);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+body.light-theme .navbar,
+html.light-theme .navbar {
+  background-color: var(--surface) !important;
+  color: var(--text-primary) !important;
+}
+
+body.dark-theme .navbar,
+html.dark-theme .navbar {
+  background-color: #1e293b !important;
+  color: white !important;
+}
+
+.navbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.navbar-logo {
+  height: 40px;
+  width: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+  transition: transform 0.3s ease;
+}
+
+.navbar-logo:hover {
+  transform: scale(1.05);
+}
+
+.navbar-brand h1 {
+  font-size: 1.5rem;
+  margin: 0;
+  color: inherit;
+  font-weight: 600;
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.navbar-menu {
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
+  margin-left: 2rem;
+  flex: 1;
+  min-width: 0;
+  overflow: visible;
+}
+
+.navbar-menu a {
+  color: inherit;
+  text-decoration: none;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  position: relative;
+}
+
+.nav-icon {
+  width: 18px;
+  height: 18px;
+  opacity: 0.8;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
+}
+
+.navbar-menu a:hover .nav-icon,
+.navbar-menu a.active .nav-icon {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+body.dark-theme .nav-icon {
+  filter: brightness(1.2) drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+}
+
+body.light-theme .navbar-menu a,
+html.light-theme .navbar-menu a {
+  color: var(--text-primary) !important;
+}
+
+body.dark-theme .navbar-menu a,
+html.dark-theme .navbar-menu a {
+  color: white !important;
+}
+
+body.light-theme .navbar-menu a:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+body.dark-theme .navbar-menu a:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.navbar-menu a.active {
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+  color: white !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.navbar-menu a.active .nav-icon {
+  filter: brightness(0) invert(1);
+}
+
+/* Menu déroulant Gestion et Configuration */
+.dropdown {
+  position: relative;
+  display: inline-block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+.dropdown-toggle {
+  background: none;
+  border: none;
+  color: inherit !important;
+  text-decoration: none;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  font-size: inherit;
+  font-family: inherit;
+  display: flex !important;
+  align-items: center;
+  gap: 0.5rem;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+.dropdown-toggle .nav-icon {
+  width: 18px;
+  height: 18px;
+  opacity: 0.8;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.dropdown-toggle:hover .nav-icon,
+.dropdown.active .dropdown-toggle .nav-icon,
+.dropdown.open .dropdown-toggle .nav-icon {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+body.light-theme .dropdown-toggle,
+html.light-theme .dropdown-toggle {
+  color: var(--text-primary) !important;
+}
+
+body.dark-theme .dropdown-toggle,
+html.dark-theme .dropdown-toggle {
+  color: white !important;
+}
+
+body.light-theme .dropdown-toggle:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+body.dark-theme .dropdown-toggle:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.dropdown.active .dropdown-toggle,
+.dropdown.open .dropdown-toggle {
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+  color: white !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.dropdown.active .dropdown-toggle .nav-icon,
+.dropdown.open .dropdown-toggle .nav-icon {
+  filter: brightness(0) invert(1);
+}
+
+.dropdown-arrow {
+  font-size: 0.75rem;
+  transition: transform 0.2s;
+}
+
+.dropdown.open .dropdown-arrow {
+  transform: rotate(180deg);
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  min-width: 200px;
+  box-shadow: var(--shadow-lg);
+  border-radius: 0.375rem;
+  margin-top: 0.25rem;
+  padding: 0.5rem 0;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-10px);
+  transition: opacity 0.2s, transform 0.2s, visibility 0.2s, background-color 0.3s, color 0.3s;
+  z-index: 1000;
+  display: block !important;
+}
+
+body.light-theme .dropdown-menu {
+  background-color: var(--surface);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+body.dark-theme .dropdown-menu {
+  background-color: #1e293b;
+  color: white;
+}
+
+.dropdown.open .dropdown-menu {
+  opacity: 1 !important;
+  visibility: visible !important;
+  transform: translateY(0) !important;
+  display: block !important;
+}
+
+.dropdown-menu a {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: inherit;
+  text-decoration: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  position: relative;
+}
+
+.dropdown-menu a::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--primary-color);
+  transform: scaleY(0);
+  transition: transform 0.2s ease;
+}
+
+.dropdown-menu a:hover::before,
+.dropdown-menu a.active::before {
+  transform: scaleY(1);
+}
+
+body.light-theme .dropdown-menu a:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+body.dark-theme .dropdown-menu a:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.dropdown-menu a.active {
+  background: linear-gradient(90deg, rgba(37, 99, 235, 0.1), transparent);
+  color: var(--primary-color) !important;
+  font-weight: 600;
+}
+
+.navbar-right {
+  display: flex !important;
+  align-items: center;
+  gap: 1.5rem;
+  flex-shrink: 0;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+.navbar-right a {
+  color: inherit !important;
+  text-decoration: none;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  transition: all 0.2s ease;
+  display: flex !important;
+  align-items: center;
+  gap: 0.5rem;
+  visibility: visible !important;
+}
+
+body.light-theme .navbar-right a:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+body.dark-theme .navbar-right a:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.navbar-right a.active {
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+  color: white !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.navbar-user {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  color: inherit;
+}
+
+.navbar-user span {
+  color: inherit;
+}
+
+.navbar-user button {
+  color: inherit;
+}
+
+.role-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+}
+
+body.light-theme .role-badge {
+  background-color: rgba(0, 0, 0, 0.1);
+  color: var(--text-primary);
+}
+
+body.dark-theme .role-badge {
+  background-color: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+.main-content {
+  flex: 1;
+  padding: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+  background-color: var(--background);
+  color: var(--text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+@media (max-width: 768px) {
+  .navbar {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .navbar-menu {
+    flex-direction: column;
+    margin-left: 0;
+    width: 100%;
+  }
+}
+

@@ -1,0 +1,51 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "id_evenement": "evt_20251103-0926",
+        "id_sitac": "sitac_20251102-153428",
+        "titre_evenement": "fermeture du pont henri claude",
+        "date_heure_evenement": "2025-11-03T09:30",
+        "description_evenement": "suite a augmentation de la hauteur d'eau les service technique on fermé le pot henri claude, chemin de hallage",
+        "auteur_evenement": "bouchet frederic",
+        "categorie_evenement": "Information",
+        "position_evenement": "pont henri claude chemin de hallage",
+        "longitude_evenement": "",
+        "latitude_evenement": "",
+        "commentaire_evenement": ""
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id_evenement": "evt_20251104-1005",
+        "id_sitac": "sitac_20251102-153428",
+        "titre_evenement": "test saisie événement N°1",
+        "date_heure_evenement": "2025-11-04T10:05",
+        "description_evenement": "description saise 1",
+        "auteur_evenement": "plouf glurpss",
+        "categorie_evenement": "Information",
+        "position_evenement": "ohm",
+        "longitude_evenement": "",
+        "latitude_evenement": "",
+        "commentaire_evenement": "mulmiuiu"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          0,
+          0
+        ]
+      }
+    }
+  ]
+}

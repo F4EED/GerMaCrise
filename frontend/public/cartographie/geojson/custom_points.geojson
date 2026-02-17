@@ -1,0 +1,328 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          3.908386,
+          45.989329
+        ]
+      },
+      "properties": {
+        "type_points": "point_eau",
+        "activation": "20251026-051911",
+        "date_heure": "2025-11-08T03:41",
+        "redacteur": "frederic bouchet",
+        "commentaire": "testouille"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          3.938599,
+          45.953059
+        ]
+      },
+      "properties": {
+        "type_points": "point_eau",
+        "activation": "20251026-051911",
+        "date_heure": "2025-11-08T03:54",
+        "redacteur": "frederic bouchet",
+        "commentaire": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          4.356637,
+          45.404815
+        ]
+      },
+      "properties": {
+        "type_points": "Route_barrée",
+        "activation": "20251026-051911",
+        "date_heure": "2025-11-08T04:49",
+        "redacteur": "frederic bouchet",
+        "commentaire": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          4.3611,
+          45.405689
+        ]
+      },
+      "properties": {
+        "type_points": "Route_barrée",
+        "activation": "20251026-051911",
+        "date_heure": "2025-11-08T04:49",
+        "redacteur": "glurpss plouf",
+        "commentaire": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          4.363718,
+          45.405124
+        ]
+      },
+      "properties": {
+        "type_points": "Route_barrée",
+        "activation": "20251026-051911",
+        "date_heure": "2025-11-08T04:50",
+        "redacteur": "Grégory Gimenez",
+        "commentaire": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          4.352109,
+          45.402156
+        ]
+      },
+      "properties": {
+        "type_points": "Route_barrée",
+        "activation": "20251026-051911",
+        "date_heure": "2025-11-08T04:50",
+        "redacteur": "Grégory Gimenez",
+        "commentaire": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          4.361089,
+          45.404145
+        ]
+      },
+      "properties": {
+        "type_points": "Route_barrée",
+        "activation": "20251026-051911",
+        "date_heure": "2025-11-08T04:50",
+        "redacteur": "ça barbotte agent plouf 69",
+        "commentaire": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          4.356894,
+          45.403829
+        ]
+      },
+      "properties": {
+        "type_points": "Route_innondée",
+        "activation": "20251026-051911",
+        "date_heure": "2025-11-08T04:51",
+        "redacteur": "frederic bouchet",
+        "commentaire": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          4.362667,
+          45.405245
+        ]
+      },
+      "properties": {
+        "type_points": "Route_innondée",
+        "activation": "20251026-051911",
+        "date_heure": "2025-11-08T04:52",
+        "redacteur": "frederic bouchet",
+        "commentaire": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          4.364418,
+          45.395359
+        ]
+      },
+      "properties": {
+        "type_points": "Danger",
+        "activation": "20251026-051911",
+        "date_heure": "2025-11-08T15:28",
+        "redacteur": "R C",
+        "commentaire": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          4.364976,
+          45.39555
+        ]
+      },
+      "properties": {
+        "type_points": "Vent",
+        "activation": "20251026-051911",
+        "date_heure": "2025-11-08T15:28",
+        "redacteur": "Grégory Gimenez",
+        "commentaire": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          4.365317,
+          45.395365
+        ]
+      },
+      "properties": {
+        "type_points": "Incendie",
+        "activation": "20251026-051911",
+        "date_heure": "2025-11-08T15:29",
+        "redacteur": "glandu troisieme ploufff",
+        "commentaire": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          4.364051,
+          45.395007
+        ]
+      },
+      "properties": {
+        "type_points": "SATER",
+        "activation": "20251026-051911",
+        "date_heure": "2025-11-08T15:34",
+        "redacteur": "glurpss plouf",
+        "commentaire": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          4.3671,
+          45.399265
+        ]
+      },
+      "properties": {
+        "type_points": "CAI",
+        "activation": "20251026-051911",
+        "date_heure": "2025-11-08T15:37",
+        "redacteur": "glurpss plouf",
+        "commentaire": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          4.368246,
+          45.399753
+        ]
+      },
+      "properties": {
+        "type_points": "CARE",
+        "activation": "20251026-051911",
+        "date_heure": "2025-11-08T16:15",
+        "redacteur": "Grégory Gimenez",
+        "commentaire": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          4.35904,
+          45.401976
+        ]
+      },
+      "properties": {
+        "type_points": "Route_barrée",
+        "activation": "20251026-051911",
+        "date_heure": "2025-11-09T13:49",
+        "redacteur": "glurpss plouf",
+        "commentaire": "yyy"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          3.605919,
+          45.580647
+        ]
+      },
+      "properties": {
+        "type_points": "",
+        "activation": "20251026-051911",
+        "date_heure": "2025-11-10T09:41",
+        "redacteur": "ça barbotte agent plouf 69",
+        "commentaire": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          4.354019,
+          45.396883
+        ]
+      },
+      "properties": {
+        "type_points": "Route_barrée",
+        "activation": "20251026-051911",
+        "date_heure": "2025-11-14T13:09",
+        "redacteur": "agentiiiiii agnetl plouf 42-2",
+        "commentaire": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          4.359995,
+          45.405336
+        ]
+      },
+      "properties": {
+        "type_points": "Danger",
+        "activation": "20251026-051911",
+        "date_heure": "2025-11-18T14:40",
+        "redacteur": "Grégory Gimenez",
+        "commentaire": "ghghghj"
+      }
+    }
+  ]
+}
